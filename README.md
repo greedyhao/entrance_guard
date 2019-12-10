@@ -1,131 +1,41 @@
-# STM32F767 挑战者开发板 BSP 说明
+# 项目介绍
 
-## 简介
+这是一个基于阿里物联网的一个门禁系统 demo，主要面向对象还是有类似需求的学生，由于未经过验证，此项目不适合使用于实际产品中
 
-本文档为 野火stm32f767 开发板的 BSP (板级支持包) 说明。
+本项目实现的功能简单的说就是，设备端可以通过各种传感器确认身份开门，远程端可以统计开门信息，也可以远程开门
 
-主要内容如下：
+目前提供的源码没有提供 rtconfig.h .config 这两个文件，因为里面有我的阿里物联网相关设备的信息
 
-- 开发板资源介绍
-- BSP 快速上手
-- 进阶使用方法
+# 目录介绍
 
-通过阅读快速上手章节开发者可以快速地上手该 BSP，将 RT-Thread 运行在开发板上。在进阶使用指南章节，将会介绍更多高级功能，帮助开发者利用 RT-Thread 驱动更多板载资源。
+| 文件夹   | 描述             |
+| -------- | ---------------- |
+| software | 存放软件相关源码 |
+| hardware | 存放硬件相关资料 |
 
-## 开发板介绍
+# 项目目标
 
-挑战者 STM32F767 是野火推出的一款基于 ARM Cortex-M7 内核的开发板，最高主频为 216Mhz，该开发板具有丰富的板载资源，可以充分发挥 STM32F767 的芯片性能。
+提供一些与门禁控制相关的外设的软件包，这个项目主要是这些软件包的简单应用
 
-开发板外观如下图所示：
+计划提供的软件包
 
-![board](figures/board.jpg)
++ [x] [as608 指纹模块](https://github.com/greedyhao/as608)
++ [ ] [rc522 nfc模块]
 
-该开发板常用 **板载资源** 如下：
+# 使用的软件包
 
-- MCU：STM32f767，主频 216MHz，1MB FLASH ，512KB RAM ，16K CACHE
-- 外部 RAM：型号，8MB
-- 外部 FLASH：型号，16MB
-- 常用外设
-  - LED：RGB灯
-  - 按键：2个，K1（兼具唤醒功能，PA0），K2（PC13）
-- 常用接口：USB 转串口、SD 卡接口、以太网接口、LCD 接口
-- 调试接口，标准 JTAG/SWD
++ [ali-iotkit](https://github.com/RT-Thread-packages/ali-iotkit)
++ [as608](https://github.com/greedyhao/as608)
++ [at_device](https://github.com/RT-Thread-packages/at_device)
++ [cJSON]()
++ [dht11](https://github.com/murphyzhao/dht11_rtt)
++ [mbedtls](https://github.com/RT-Thread-packages/mbedtls)
 
-开发板更多详细信息请参考野火 [STM32 挑战者开发板介绍](https://fire-stm32.taobao.com/index.htm)。
+# 演示视频
 
-## 外设支持
+[演示视频](https://www.bilibili.com/video/av78722650)
 
-本 BSP 目前对外设的支持情况如下：
+# 相关资料
 
-| **板载外设**      | **支持情况** | **备注**                                                |
-| :---------------- | :----------: | :------------------------------------------------------ |
-| USB 转串口        |     支持     |                                                         |
-| RS232             |     支持     | 与以太网有引脚冲突                                      |
-| QSPI Flash        |     支持     |                                                         |
-| 电位器            |     支持     | 使用 ADC1                                               |
-| 以太网            |   暂不支持   | 移植中                                                  |
-| MPU6050六轴传感器 |     支持     |                                                         |
-| SDRAM             |     支持     |                                                         |
-| LCD               |     支持     | 支持 RGB 屏                                             |
-| SD卡              |     支持     |                                                         |
-| CAN               |   即将支持   |                                                         |
-| EMW1062           |   暂不支持   |                                                         |
-| **片上外设**      | **支持情况** | **备注**                                                |
-| GPIO              |     支持     | PA0, PA1... PK15 ---> PIN: 0, 1...176                   |
-| UART              |     支持     | UART1/x/x                                               |
-| SPI               |     支持     | SPI1/x/x                                                |
-| I2C               |     支持     | 软件 I2C                                                |
-| ADC               |     支持     |                                                         |
-| RTC               |     支持     | 支持外部晶振和内部低速时钟                              |
-| WDT               |     支持     |                                                         |
-| FLASH             |     支持     | 已适配 [FAL](https://github.com/RT-Thread-packages/fal) |
-| SDIO              |     支持     |                                                         |
-| PWM               |   暂不支持   | 即将支持                                                |
-| USB Device        |   暂不支持   | 即将支持                                                |
-| USB Host          |   暂不支持   | 即将支持                                                |
-| **扩展模块**      | **支持情况** | **备注**                                                |
-| 暂无              |   暂不支持   | 暂不支持                                                |
-
-## 使用说明
-
-使用说明分为如下两个章节：
-
-- 快速上手
-
-    本章节是为刚接触 RT-Thread 的新手准备的使用说明，遵循简单的步骤即可将 RT-Thread 操作系统运行在该开发板上，看到实验效果 。
-
-- 进阶使用
-
-    本章节是为需要在 RT-Thread 操作系统上使用更多开发板资源的开发者准备的。通过使用 ENV 工具对 BSP 进行配置，可以开启更多板载资源，实现更多高级功能。
-
-
-### 快速上手
-
-本 BSP 为开发者提供 MDK4、MDK5 和 IAR 工程，并且支持 GCC 开发环境。下面以 MDK5 开发环境为例，介绍如何将系统运行起来。
-
-#### 硬件连接
-
-使用数据线连接开发板到 PC，打开电源开关。
-
-#### 编译下载
-
-双击 project.uvprojx 文件，打开 MDK5 工程，编译并下载程序到开发板。
-
-> 工程默认配置使用 Jlink 仿真器下载程序，在通过 Jlink 连接开发板的基础上，点击下载按钮即可下载程序到开发板
-
-#### 运行结果
-
-下载程序成功之后，系统会自动运行，LED 闪烁。
-
-连接开发板对应串口到 PC , 在终端工具里打开相应的串口（115200-8-1-N），复位设备后，可以看到 RT-Thread 的输出信息:
-
-```bash
- \ | /
-- RT -     Thread Operating System
- / | \     4.0.0 build Dec 10 2018
- 2006 - 2018 Copyright by rt-thread team
-msh >
-```
-### 进阶使用
-
-此 BSP 默认只开启了 GPIO 和 串口1 的功能，如果需使用 SD 卡、Flash 等更多高级功能，需要利用 ENV 工具对BSP 进行配置，步骤如下：
-
-1. 在 bsp 下打开 env 工具。
-
-2. 输入`menuconfig`命令配置工程，配置好之后保存退出。
-
-3. 输入`pkgs --update`命令更新软件包。
-
-4. 输入`scons --target=mdk4/mdk5/iar` 命令重新生成工程。
-
-本章节更多详细的介绍请参考 [STM32 系列 BSP 外设驱动使用教程](../docs/STM32系列BSP外设驱动使用教程.md)。
-
-## 注意事项
-
-暂无
-
-## 联系人信息
-
-维护人:
-
--  [greedyhao](https://github.com/greedyhao), 邮箱：<hao_kr@163.com>
++ [源码地址](https://github.com/greedyhao/entrance_guard)
++ [相关教程](https://zhuanlan.zhihu.com/c_1179710392883884032)
