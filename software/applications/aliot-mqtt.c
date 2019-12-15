@@ -61,10 +61,12 @@ static void   *pclient;
 static uint8_t is_running = 0;
 
 /* some status in this project */
-static rt_event_t event_update;
+static rt_event_t event_control, event_sensor;
 static rt_timer_t timer_temp_humi;
+/* control event define */
 #define EVENT_LOCK_STAT     (1 << 0)
-#define EVENT_TEMP_HUMI     (1 << 1)
+/* sensor event define */
+#define EVENT_TEMP_HUMI     (1 << 0)
 static uint8_t lock_status = 0; /* 0: close; 1: open */
 
 static uint8_t temp = 0;
@@ -74,7 +76,7 @@ static uint8_t humi = 0;
 
 static void get_temp_humi_handle(void *parm)
 {
-    rt_event_send(event_update, EVENT_TEMP_HUMI);
+    rt_event_send(event_sensor, EVENT_TEMP_HUMI);
 }
 
 static char* rt_strlwr(char *str)
@@ -202,7 +204,7 @@ static void remote_open_handle(void *pcontext, void *pclient, iotx_mqtt_event_ms
     rt_kprintf("remote open!\r\n");
     lock_status = 1;
     rt_pin_write(ALI_LOCK_PIN, 0);
-    send_ok = rt_event_send(event_update, EVENT_LOCK_STAT);
+    send_ok = rt_event_send(event_control, EVENT_LOCK_STAT);
     if (RT_EOK != send_ok)
         rt_kprintf("send error\r\n");
 }
@@ -226,7 +228,7 @@ static void update_status(void)
 {
     rt_uint32_t recved = 0;
 
-    if (rt_event_recv(event_update, EVENT_LOCK_STAT | EVENT_TEMP_HUMI, 
+    if (rt_event_recv(event_control, EVENT_LOCK_STAT, 
         RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR, 0, 
         &recved) == RT_EOK)
     {
@@ -237,17 +239,29 @@ static void update_status(void)
             rt_thread_mdelay(5000);
             lock_status = 0;
             rt_pin_write(ALI_LOCK_PIN, 1);
-            // recved &= EVENT_LOCK_STAT;
             break;
-        case EVENT_TEMP_HUMI:
-            // dht11_get_temp_humi(&temp, &humi);
 
         default:
-            dht11_get_temp_humi(&temp, &humi);
             break;
         }
-        ali_mqtt_pub();
     }
+
+    if (rt_event_recv(event_sensor, EVENT_TEMP_HUMI, 
+        RT_EVENT_FLAG_OR | RT_EVENT_FLAG_CLEAR, 0, 
+        &recved) == RT_EOK)
+    {
+        switch (recved)
+        {
+        case EVENT_TEMP_HUMI:
+            dht11_get_temp_humi(&temp, &humi);
+
+        default:
+            break;
+        }
+    }
+
+    if (recved != 0)
+        ali_mqtt_pub();
 }
 
 /**
@@ -325,7 +339,6 @@ static void mqtt_client(void)
 
     /* Subscribe the specific topic */
     rc = IOT_MQTT_Subscribe(pclient, ALINK_SERVICE_SET_SUB, IOTX_MQTT_QOS1, _demo_message_arrive, NULL);
-
     if (rc < 0) {
         IOT_MQTT_Destroy(&pclient);
         EXAMPLE_TRACE("IOT_MQTT_Subscribe() failed, rc = %d", rc);
@@ -336,25 +349,16 @@ static void mqtt_client(void)
     /* Subscribe the specific topic */
     rc = IOT_MQTT_Subscribe(pclient, ALINK_PROPERTY_POST_REPLY_SUB, IOTX_MQTT_QOS1, _demo_message_arrive, NULL);
     if (rc < 0) {
-        IOT_MQTT_Destroy(&pclient);
-        EXAMPLE_TRACE("IOT_MQTT_Subscribe() failed, rc = %d", rc);
-        rc = -1;
         goto do_exit;
     }
 
     rc = IOT_MQTT_Subscribe(pclient, ALINK_SERVICE_REMOTE_OPEN, IOTX_MQTT_QOS1, remote_open_handle, NULL);
     if (rc < 0) {
-        IOT_MQTT_Destroy(&pclient);
-        EXAMPLE_TRACE("IOT_MQTT_Subscribe() failed, rc = %d", rc);
-        rc = -1;
         goto do_exit;
     }
 
     rc = IOT_MQTT_Subscribe(pclient, ALINK_SERVICE_GETKEY_LIST, IOTX_MQTT_QOS1, getkey_list_handle, NULL);
     if (rc < 0) {
-        IOT_MQTT_Destroy(&pclient);
-        EXAMPLE_TRACE("IOT_MQTT_Subscribe() failed, rc = %d", rc);
-        rc = -1;
         goto do_exit;
     }
 
@@ -391,6 +395,11 @@ static void mqtt_client(void)
     IOT_MQTT_Destroy(&pclient);
 
 do_exit:
+    if (rc < 0) {
+        IOT_MQTT_Destroy(&pclient);
+        EXAMPLE_TRACE("IOT_MQTT_Subscribe() failed, rc = %d", rc);
+    }
+
     if (NULL != msg_buf) {
         HAL_Free(msg_buf);
     }
@@ -523,10 +532,17 @@ static int ali_mqtt_main(int argc, char **argv)
     rt_pin_mode(ALI_LOCK_PIN, PIN_MODE_OUTPUT);
     rt_pin_write(ALI_LOCK_PIN, 1);
 
-    event_update = rt_event_create("evnt-upd", RT_IPC_FLAG_FIFO);
-    if (event_update == RT_NULL)
+    event_control = rt_event_create("evnt-ctl", RT_IPC_FLAG_FIFO);
+    if (event_control == RT_NULL)
     {
         rt_kprintf("event create error!\r\n");
+        return 1;
+    }
+
+    event_sensor = rt_event_create("evnt-sor", RT_IPC_FLAG_FIFO);
+    if (event_sensor == RT_NULL)
+    {
+        rt_kprintf("event sensor error!\r\n");
         return 1;
     }
 
