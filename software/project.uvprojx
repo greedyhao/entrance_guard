@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>STM32F767xx, USE_HAL_DRIVER, RT_USING_ARM_LIBC</Define>
               <Undefine></Undefine>
-              <IncludePath>.;rt-thread\include;applications;.;board;board\CubeMX_Config\Inc;board\ports;libraries\HAL_Drivers;libraries\HAL_Drivers\config;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\infra;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\mqtt\impl;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\mqtt;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_model;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_model\client;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_model\server;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_sign;packages\ali-iotkit-v3.0.1\iotkit-embedded\wrappers;packages\as608-latest;packages\at_device-latest\inc;packages\at_device-latest\class\esp8266;packages\cJSON-v1.0.2;packages\dht11-latest;packages\i2c-tools-latest;packages\i2c-tools-latest\src;packages\mbedtls-v2.6.0\mbedtls\include;packages\mbedtls-v2.6.0\mbedtls\include\mbedtls;packages\mbedtls-v2.6.0\ports\inc;rt-thread\libcpu\arm\common;rt-thread\libcpu\arm\cortex-m7;rt-thread\components\dfs\include;rt-thread\components\dfs\filesystems\devfs;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\sensors;rt-thread\components\drivers\include;rt-thread\components\finsh;rt-thread\components\libc\compilers\armlibc;rt-thread\components\libc\compilers\common;rt-thread\components\net\at\include;rt-thread\components\net\at\at_socket;rt-thread\components\net\netdev\include;rt-thread\components\net\sal_socket\include;rt-thread\components\net\sal_socket\include\socket;rt-thread\components\net\sal_socket\impl;rt-thread\components\net\sal_socket\include\dfs_net;rt-thread\components\net\sal_socket\include\dfs_net\sys_select;rt-thread\components\net\sal_socket\include\socket\sys_socket;libraries\STM32F7xx_HAL\STM32F7xx_HAL_Driver\Inc;libraries\STM32F7xx_HAL\CMSIS\Device\ST\STM32F7xx\Include;libraries\STM32F7xx_HAL\CMSIS\Include</IncludePath>
+              <IncludePath>.;rt-thread\include;applications;.;board;board\CubeMX_Config\Inc;board\ports;libraries\HAL_Drivers;libraries\HAL_Drivers\config;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\infra;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\mqtt\impl;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\mqtt;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_model;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_model\client;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_model\server;packages\ali-iotkit-v3.0.1\iotkit-embedded\src\dev_sign;packages\ali-iotkit-v3.0.1\iotkit-embedded\wrappers;packages\as608-latest;packages\at_device-latest\inc;packages\at_device-latest\class\esp8266;packages\cJSON-v1.0.2;packages\dht11-latest;packages\i2c-tools-latest;packages\i2c-tools-latest\src;packages\mbedtls-v2.6.0\mbedtls\include;packages\mbedtls-v2.6.0\mbedtls\include\mbedtls;packages\mbedtls-v2.6.0\ports\inc;rt-thread\libcpu\arm\common;rt-thread\libcpu\arm\cortex-m7;rt-thread\components\dfs\include;rt-thread\components\dfs\filesystems\devfs;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\spi;rt-thread\components\drivers\include;rt-thread\components\drivers\include;rt-thread\components\drivers\sensors;rt-thread\components\drivers\include;rt-thread\components\finsh;rt-thread\components\libc\compilers\armlibc;rt-thread\components\libc\compilers\common;rt-thread\components\net\at\include;rt-thread\components\net\at\at_socket;rt-thread\components\net\netdev\include;rt-thread\components\net\sal_socket\include;rt-thread\components\net\sal_socket\include\socket;rt-thread\components\net\sal_socket\impl;rt-thread\components\net\sal_socket\include\dfs_net;rt-thread\components\net\sal_socket\include\dfs_net\sys_select;rt-thread\components\net\sal_socket\include\socket\sys_socket;libraries\STM32F7xx_HAL\STM32F7xx_HAL_Driver\Inc;libraries\STM32F7xx_HAL\CMSIS\Device\ST\STM32F7xx\Include;libraries\STM32F7xx_HAL\CMSIS\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -471,6 +471,21 @@
               <FileType>1</FileType>
               <FilePath>applications\dht11.c</FilePath>
             </File>
+            <File>
+              <FileName>mfrc522_rtt_port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>applications\mfrc522_rtt_port.c</FilePath>
+            </File>
+            <File>
+              <FileName>mfrc522.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>applications\mfrc522.c</FilePath>
+            </File>
+            <File>
+              <FileName>read_nuid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>applications\read_nuid.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -500,6 +515,11 @@
               <FileName>drv_usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>libraries\HAL_Drivers\drv_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>drv_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>libraries\HAL_Drivers\drv_spi.c</FilePath>
             </File>
             <File>
               <FileName>drv_soft_i2c.c</FileName>
@@ -1334,6 +1354,75 @@
         </Group>
         <Group>
           <GroupName>DeviceDrivers</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>1</IncludeInBuild>
+              <AlwaysBuild>0</AlwaysBuild>
+              <GenerateAssemblyFile>0</GenerateAssemblyFile>
+              <AssembleAssemblyFile>0</AssembleAssemblyFile>
+              <PublicsOnly>0</PublicsOnly>
+              <StopOnExitCode>3</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>0</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>0</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <uGnu>2</uGnu>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>2</v6Lto>
+                <v6WtE>2</v6WtE>
+                <v6Rtti>2</v6Rtti>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define> </Define>
+                  <Undefine> </Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <uClangAs>2</uClangAs>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
           <Files>
             <File>
               <FileName>i2c_core.c</FileName>
@@ -1364,6 +1453,16 @@
               <FileName>serial.c</FileName>
               <FileType>1</FileType>
               <FilePath>rt-thread\components\drivers\serial\serial.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>rt-thread\components\drivers\spi\spi_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi_dev.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>rt-thread\components\drivers\spi\spi_dev.c</FilePath>
             </File>
             <File>
               <FileName>completion.c</FileName>
@@ -1664,6 +1763,21 @@
               <FileName>stm32f7xx_hal_i2c_ex.c</FileName>
               <FileType>1</FileType>
               <FilePath>libraries\STM32F7xx_HAL\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_i2c_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f7xx_hal_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>libraries\STM32F7xx_HAL\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f7xx_hal_spi_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>libraries\STM32F7xx_HAL\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_spi_ex.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f7xx_hal_qspi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>libraries\STM32F7xx_HAL\STM32F7xx_HAL_Driver\Src\stm32f7xx_hal_qspi.c</FilePath>
             </File>
             <File>
               <FileName>stm32f7xx_hal_rtc.c</FileName>
