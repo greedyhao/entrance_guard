@@ -78,10 +78,15 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 #include <drv_gpio.h>
-// #include <drv_spi.h>
 
+#ifndef MFRC522_SPI_DEVICE_NAME
+#define MFRC522_SPI_DEVICE_NAME "spi1"
+#endif
+#ifndef MFRC522_SPI_BUS_NAME
+#define MFRC522_SPI_BUS_NAME    "spi10"
+#endif
 #ifndef MFRC522_SPICLOCK
-// MFRC522 accept upto 10MHz
+#define MFRC522_SPICLOCK    4000000U // MFRC522 accept upto 10MHz
 #endif
 
 #ifndef bool
@@ -375,16 +380,17 @@ void PCD_StopCrypto1(void);
 enum StatusCode MIFARE_Read(byte blockAddr, byte *buffer, byte *bufferSize);
 enum StatusCode MIFARE_Write(byte blockAddr, byte *buffer, byte bufferSize);
 enum StatusCode MIFARE_Ultralight_Write(byte page, byte *buffer, byte bufferSize);
-enum StatusCode MIFARE_Decrement(byte blockAddr, rt_uint32_t delta);
-enum StatusCode MIFARE_Increment(byte blockAddr, rt_uint32_t delta);
+enum StatusCode MIFARE_Decrement(byte blockAddr, int32_t delta);
+enum StatusCode MIFARE_Increment(byte blockAddr, int32_t delta);
 enum StatusCode MIFARE_Restore(byte blockAddr);
+enum StatusCode MIFARE_TwoStepHelper(byte command, byte blockAddr, int32_t data);
 enum StatusCode MIFARE_Transfer(byte blockAddr);
-enum StatusCode MIFARE_GetValue(byte blockAddr, rt_uint32_t *value);
-enum StatusCode MIFARE_SetValue(byte blockAddr, rt_uint32_t value);
+enum StatusCode MIFARE_GetValue(byte blockAddr, int32_t *value);
+enum StatusCode MIFARE_SetValue(byte blockAddr, int32_t value);
 enum StatusCode PCD_NTAG216_AUTH(byte *passWord, byte pACK[]);
 
 // // Support functions
-// enum StatusCode PCD_MIFARE_Transceive(byte *sendData, byte sendLen, bool acceptTimeout = false);
+enum StatusCode PCD_MIFARE_Transceive(byte *sendData, byte sendLen, bool acceptTimeout);
 // // old function used too much memory, now name moved to flash; if you need char, copy from flash to memory
 // //const char *GetStatusCodeName(byte code);
 // static const __FlashStringHelper *GetStatusCodeName(enum `StatusCode code);
@@ -393,13 +399,13 @@ enum PICC_Type PICC_GetType(byte sak);
 const char *PICC_GetTypeName(enum PICC_Type type);
 // static const __FlashStringHelper *PICC_GetTypeName(PICC_Type type);
 
-// // Support functions for debuging
-// void PCD_DumpVersionToSerial(void);
-// void PICC_DumpToSerial(Uid *uid);
-// void PICC_DumpDetailsToSerial(Uid *uid);
-// void PICC_DumpMifareClassicToSerial(Uid *uid, PICC_Type piccType, MIFARE_Key *key);
-// void PICC_DumpMifareClassicSectorToSerial(Uid *uid, MIFARE_Key *key, byte sector);
-// void PICC_DumpMifareUltralightToSerial();
+// Support functions for debuging
+void PCD_DumpVersionToSerial(void);
+void PICC_DumpToSerial(Uid *uid);
+void PICC_DumpDetailsToSerial(Uid *uid);
+void PICC_DumpMifareClassicToSerial(Uid *uid, enum PICC_Type piccType, MIFARE_Key *key);
+void PICC_DumpMifareClassicSectorToSerial(Uid *uid, MIFARE_Key *key, byte sector);
+void PICC_DumpMifareUltralightToSerial(void);
 
 // Advanced functions for MIFARE
 void MIFARE_SetAccessBits(byte *accessBitBuffer, byte g0, byte g1, byte g2, byte g3);

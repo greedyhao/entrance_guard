@@ -1,13 +1,5 @@
 #include "mfrc522.h"
 
-#ifndef MFRC522_SPI_DEVICE_NAME
-#define MFRC522_SPI_DEVICE_NAME "spi1"
-#endif
-#ifndef MFRC522_SPI_BUS_NAME
-#define MFRC522_SPI_BUS_NAME    "spi10"
-#endif
-#define MFRC522_SPICLOCK    4000000U // MFRC522 accept upto 10MHz
-
 static struct rt_spi_device mfrc522_spi_dev;
 
 static int rt_hw_spi_rc522_init()
