@@ -5,13 +5,9 @@ cwd     = GetCurrentDir()
 CPPPATH = [cwd, str(Dir('#'))]
 src     = Split("""
 main.c
-aliot-mqtt.c
-dht11.c
-mfrc522_rtt_port.c
-mfrc522.c
-read_nuid.c
 """)
-
+#aliot-mqtt.c
+#dht11.c
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
 
 Return('group')

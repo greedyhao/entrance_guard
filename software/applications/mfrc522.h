@@ -80,13 +80,19 @@
 #include <drv_gpio.h>
 
 #ifndef MFRC522_SPI_DEVICE_NAME
-#define MFRC522_SPI_DEVICE_NAME "spi1"
+#define MFRC522_SPI_DEVICE_NAME "spi10"
 #endif
 #ifndef MFRC522_SPI_BUS_NAME
-#define MFRC522_SPI_BUS_NAME    "spi10"
+#define MFRC522_SPI_BUS_NAME    "spi1"
 #endif
 #ifndef MFRC522_SPICLOCK
-#define MFRC522_SPICLOCK    4000000U // MFRC522 accept upto 10MHz
+#define MFRC522_SPICLOCK    1000000U // MFRC522 accept upto 10MHz
+#endif
+#ifndef MFRC522_SS_PIN
+#define MFRC522_SS_PIN 	GET_PIN(H, 3)
+#endif
+#ifndef MFRC522_RST_PIN
+#define MFRC522_RST_PIN GET_PIN(H, 8)
 #endif
 
 #ifndef bool
@@ -392,7 +398,7 @@ enum StatusCode PCD_NTAG216_AUTH(byte *passWord, byte pACK[]);
 // // Support functions
 enum StatusCode PCD_MIFARE_Transceive(byte *sendData, byte sendLen, bool acceptTimeout);
 // // old function used too much memory, now name moved to flash; if you need char, copy from flash to memory
-// //const char *GetStatusCodeName(byte code);
+const char *GetStatusCodeName(enum StatusCode code);
 // static const __FlashStringHelper *GetStatusCodeName(enum `StatusCode code);
 enum PICC_Type PICC_GetType(byte sak);
 // // old function used too much memory, now name moved to flash; if you need char, copy from flash to memory
@@ -421,5 +427,6 @@ bool PICC_IsNewCardPresent(void);
 bool PICC_ReadCardSerial(void);
 
 Uid *get_uid(void);
+void PCD_End(void);
 
 #endif /* _MFRC522_H_ */
