@@ -20,12 +20,13 @@
 计划提供的软件包
 
 + [x] [as608 指纹模块](https://github.com/greedyhao/as608)
-+ [ ] [rc522 nfc模块]
++ [x] [rc522 nfc模块](https://github.com/greedyhao/rc522_rtt)
 
 # 使用的软件包
 
 + [ali-iotkit](https://github.com/RT-Thread-packages/ali-iotkit)
 + [as608](https://github.com/greedyhao/as608)
++ [rc522](https://github.com/greedyhao/rc522_rtt)
 + [at_device](https://github.com/RT-Thread-packages/at_device)
 + [cJSON]()
 + [dht11](https://github.com/murphyzhao/dht11_rtt)
