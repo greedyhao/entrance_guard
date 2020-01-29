@@ -24,7 +24,7 @@ entry_key_t get_key_obj(enum entry_key_type key_type)
 void reg_key_obj(enum entry_key_type key_type, entry_key_t key_obj)
 {
     RT_ASSERT(key_obj != RT_NULL);
-    if (key_table[key_type] != 0)
+    if (key_table[key_type] != RT_NULL)
     {
         rt_kprintf("Warning! Type of %d has been registered!", (uint8_t)key_type);
     }
@@ -32,7 +32,23 @@ void reg_key_obj(enum entry_key_type key_type, entry_key_t key_obj)
     key_table[key_type] = key_obj; 
 }
 
-uint32_t check_auth(void)
+/**
+ * @brief Check user's authority
+ * 
+ * @return uint16_t 
+ */
+uint16_t check_auth(void)
 {
-    
+    uint8_t i = 0;
+    uint16_t id = KEY_VER_ERROR;
+    for (i = 0; i < KEY_TYPES_MAX; i++)
+    {
+        if (key_table[i] != RT_NULL)
+        {
+            id = key_table[i]->ver_key();
+            if (id != KEY_VER_ERROR)
+                return id;
+        }
+    }
+    return id;
 }

@@ -6,6 +6,8 @@
 
 #define KEY_TYPES_MAX 10U
 #define KEY_ID_MAX 8U
+#define KEY_VER_TIMEOUT 20U
+#define KEY_VER_ERROR 255U
 
 enum entry_key_type
 {
@@ -16,11 +18,10 @@ enum entry_key_type
 };
 
 struct entry_key{
-    uint8_t enable;    // numbers of key
     // rt_slist_t key_list;// list of keys
     void (*add_key)();  // add a new key
     void (*del_key)();  // delet a key
-    void (*ver_key)();  // verify the key
+    uint16_t (*ver_key)();  // verify the key
 };
 typedef struct entry_key *entry_key_t;
 
