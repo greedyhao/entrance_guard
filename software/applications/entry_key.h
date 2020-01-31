@@ -19,9 +19,10 @@ enum entry_key_type
 
 struct entry_key{
     // rt_slist_t key_list;// list of keys
-    void (*add_key)();  // add a new key
-    void (*del_key)();  // delet a key
-    uint16_t (*ver_key)();  // verify the key
+    void (*add_key)(uint16_t id);  // add a new key
+    void (*del_key)(uint16_t id);  // delet a key
+    uint16_t (*ver_key)(void);  // verify the key
+    uint8_t (*has_key)(uint16_t id); // check presence of the key
 };
 typedef struct entry_key *entry_key_t;
 

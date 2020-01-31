@@ -33,7 +33,7 @@ void reg_key_obj(enum entry_key_type key_type, entry_key_t key_obj)
 }
 
 /**
- * @brief Check user's authority
+ * @brief Check authority
  * 
  * @return uint16_t 
  */
@@ -51,4 +51,16 @@ uint16_t check_auth(void)
         }
     }
     return id;
+}
+
+/**
+ * @brief Add authority
+ * 
+ * @param key_type 
+ * @param id 
+ */
+void add_auth(enum entry_key_type key_type, uint16_t id)
+{
+    RT_ASSERT(key_table[key_type] != RT_NULL);
+    key_table[key_type]->add_key(id);
 }
