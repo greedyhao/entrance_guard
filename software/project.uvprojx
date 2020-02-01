@@ -472,6 +472,11 @@
               <FileType>1</FileType>
               <FilePath>applications\reg_key_fp.c</FilePath>
             </File>
+            <File>
+              <FileName>reg_key_rc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\reg_key_rc.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

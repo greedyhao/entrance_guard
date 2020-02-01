@@ -26,7 +26,6 @@ struct entry_key{
 };
 typedef struct entry_key *entry_key_t;
 
-
 /**
  * @brief Regist the key object
  * 

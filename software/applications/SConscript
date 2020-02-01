@@ -7,6 +7,7 @@ src     = Split("""
 main.c
 entry_key.c
 reg_key_fp.c
+reg_key_rc.c
 """)
 
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)
