@@ -6,8 +6,13 @@
 
 #define KEY_TYPES_MAX 10U
 #define KEY_ID_MAX 8U
-#define KEY_VER_TIMEOUT 20U
+#define KEY_VER_WAIT_TIME 20
 #define KEY_VER_ERROR 255U
+
+#define EVT_KEY_DET_PW (1U << 0)
+#define EVT_KEY_DET_FP (1U << 1)
+#define EVT_KEY_DET_RF (1U << 2)
+#define EVT_KEY_DET_FD (1U << 3)
 
 enum entry_key_type
 {
@@ -25,6 +30,13 @@ struct entry_key{
     uint8_t (*has_key)(uint16_t id); // check presence of the key
 };
 typedef struct entry_key *entry_key_t;
+
+/**
+ * @brief Get the key det evt object
+ * 
+ * @return rt_event_t 
+ */
+rt_event_t get_key_det_evt(void);
 
 /**
  * @brief Regist the key object

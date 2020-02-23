@@ -2,7 +2,14 @@
 #include <rtthread.h>
 #include <rtdevice.h>
 
+#define DBG_TAG              "key.main"
+// #define DBG_LVL              DBG_INFO
+#define DBG_LVL              DBG_LOG
+#include <rtdbg.h>
+
 static entry_key_t key_table[KEY_TYPES_MAX] = {0};
+static rt_event_t kdet_evt = RT_NULL;
+static uint8_t flag_add_key = 0;
 
 /**
  * @brief Get the key object
@@ -16,6 +23,16 @@ entry_key_t get_key_obj(enum entry_key_type key_type)
 }
 
 /**
+ * @brief Get the key det evt object
+ * 
+ * @return rt_event_t 
+ */
+rt_event_t get_key_det_evt(void)
+{
+    return kdet_evt;
+}
+
+/**
  * @brief Regist the key object
  * 
  * @param key_type 
@@ -26,7 +43,7 @@ void reg_key_obj(enum entry_key_type key_type, entry_key_t key_obj)
     RT_ASSERT(key_obj != RT_NULL);
     if (key_table[key_type] != RT_NULL)
     {
-        rt_kprintf("Warning! Type of %d has been registered!", (uint8_t)key_type);
+        LOG_W("Warning! Type of %d has been registered!", (uint8_t)key_type);
     }
 
     key_table[key_type] = key_obj; 
@@ -39,19 +56,35 @@ void reg_key_obj(enum entry_key_type key_type, entry_key_t key_obj)
  */
 uint16_t check_auth(void)
 {
-    uint8_t i = 0;
     uint16_t id = KEY_VER_ERROR;
-    for (i = 0; i < KEY_TYPES_MAX; i++)
+    uint32_t set = 0;
+
+    rt_event_recv(kdet_evt, (EVT_KEY_DET_FP|EVT_KEY_DET_RF), RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &set);
+    if (flag_add_key) // 添加钥匙时等待
+        return id;
+    switch (set)
     {
-        if (key_table[i] != RT_NULL)
-        {
-            id = key_table[i]->ver_key();
-            if (id != KEY_VER_ERROR)
-                return id;
-        }
+    case EVT_KEY_DET_FP:
+        id = key_table[ENTRY_KEY_FP]->ver_key();
+        break;
+    case EVT_KEY_DET_RF:
+        id = key_table[ENTRY_KEY_RF]->ver_key();
+    default:
+        break;
     }
     return id;
 }
+
+void check_auth_test(void *p)
+{
+    uint16_t id = KEY_VER_ERROR;
+    while (1)
+    {
+        id = check_auth();
+        LOG_I("id:%x", id);
+    }
+}
+MSH_CMD_EXPORT(check_auth_test, "check auth test");
 
 /**
  * @brief Add authority
@@ -61,6 +94,29 @@ uint16_t check_auth(void)
  */
 void add_auth(enum entry_key_type key_type, uint16_t id)
 {
+    flag_add_key = 1;
     RT_ASSERT(key_table[key_type] != RT_NULL);
     key_table[key_type]->add_key(id);
+    flag_add_key = 0;
 }
+
+void add_auth_test(void *p)
+{
+    // add_auth(ENTRY_KEY_FP, 0x01);
+    add_auth(ENTRY_KEY_RF, 0x01);
+}
+MSH_CMD_EXPORT(add_auth_test, "add auth test");
+
+static int entry_key_init(void)
+{
+    kdet_evt = rt_event_create("kdet-evt", RT_IPC_FLAG_FIFO);
+    if (RT_NULL == kdet_evt)
+        LOG_E("create kdet_evt failed!\n");
+    
+    rt_thread_t tid = RT_NULL;
+    tid = rt_thread_create("kdet-tid", check_auth_test, RT_NULL, 512, 14, 10);
+    if (tid != RT_NULL)
+        rt_thread_startup(tid);
+    return 0;
+}
+INIT_COMPONENT_EXPORT(entry_key_init);
