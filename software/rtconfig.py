@@ -2,7 +2,7 @@ import os
 
 # toolchains options
 ARCH='arm'
-CPU='cortex-m7'
+CPU='cortex-m4'
 CROSS_TOOL='gcc'
 
 # bsp lib config
@@ -16,14 +16,14 @@ if os.getenv('RTT_ROOT'):
 # cross_tool provides the cross compiler
 # EXEC_PATH is the compiler execute path, for example, CodeSourcery, Keil MDK, IAR
 if  CROSS_TOOL == 'gcc':
-    PLATFORM 	= 'gcc'
-    EXEC_PATH 	= r'C:\Users\XXYYZZ'
+    PLATFORM    = 'gcc'
+    EXEC_PATH   = r'C:\Users\XXYYZZ'
 elif CROSS_TOOL == 'keil':
-    PLATFORM 	= 'armcc'
-    EXEC_PATH 	= r'C:/Keil_v5'
+    PLATFORM    = 'armcc'
+    EXEC_PATH   = r'C:/Keil_v5'
 elif CROSS_TOOL == 'iar':
-	PLATFORM 	= 'iar'
-	EXEC_PATH 	= r'C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.0'
+    PLATFORM    = 'iar'
+    EXEC_PATH   = r'C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.0'
 
 if os.getenv('RTT_EXEC_PATH'):
     EXEC_PATH = os.getenv('RTT_EXEC_PATH')
@@ -43,10 +43,10 @@ if PLATFORM == 'gcc':
     OBJDUMP = PREFIX + 'objdump'
     OBJCPY = PREFIX + 'objcopy'
 
-    DEVICE = ' -mcpu=cortex-m7 -mthumb -mfpu=fpv5-d16 -mfloat-abi=hard -ffunction-sections -fdata-sections'
+    DEVICE = ' -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard -ffunction-sections -fdata-sections'
     CFLAGS = DEVICE + ' -Dgcc'
     AFLAGS = ' -c' + DEVICE + ' -x assembler-with-cpp -Wa,-mimplicit-it=thumb '
-    LFLAGS = DEVICE + ' -Wl,--gc-sections,-Map=rt-thread.map,-cref,-u,Reset_Handler -T board/linker_scripts/link.lds'
+    LFLAGS = DEVICE + ' -Wl,--gc-sections,-Map=rtthread.map,-cref,-u,Reset_Handler -T board/linker_scripts/link.lds'
 
     CPATH = ''
     LPATH = ''
@@ -70,10 +70,10 @@ elif PLATFORM == 'armcc':
     LINK = 'armlink'
     TARGET_EXT = 'axf'
 
-    DEVICE = ' --cpu Cortex-M7.fp.sp'
+    DEVICE = ' --cpu Cortex-M4.fp '
     CFLAGS = '-c ' + DEVICE + ' --apcs=interwork --c99'
     AFLAGS = DEVICE + ' --apcs=interwork '
-    LFLAGS = DEVICE + ' --scatter "board\linker_scripts\link.sct" --info sizes --info totals --info unused --info veneers --list rt-thread.map --strict'
+    LFLAGS = DEVICE + ' --scatter "board\linker_scripts\link.sct" --info sizes --info totals --info unused --info veneers --list rtthread.map --strict'
     CFLAGS += ' -I' + EXEC_PATH + '/ARM/ARMCC/include'
     LFLAGS += ' --libpath=' + EXEC_PATH + '/ARM/ARMCC/lib'
 
@@ -114,20 +114,20 @@ elif PLATFORM == 'iar':
     CFLAGS += ' --no_clustering'
     CFLAGS += ' --no_scheduling'
     CFLAGS += ' --endian=little'
-    CFLAGS += ' --cpu=Cortex-M7' 
-    CFLAGS += ' -e' 
-    CFLAGS += ' --fpu=VFPv5_sp'
+    CFLAGS += ' --cpu=Cortex-M4'
+    CFLAGS += ' -e'
+    CFLAGS += ' --fpu=VFPv4_sp'
     CFLAGS += ' --dlib_config "' + EXEC_PATH + '/arm/INC/c/DLib_Config_Normal.h"'
     CFLAGS += ' --silent'
-    
+
     AFLAGS = DEVICE
-    AFLAGS += ' -s+' 
-    AFLAGS += ' -w+' 
-    AFLAGS += ' -r' 
-    AFLAGS += ' --cpu Cortex-M7' 
-    AFLAGS += ' --fpu VFPv5_sp' 
-    AFLAGS += ' -S' 
-    
+    AFLAGS += ' -s+'
+    AFLAGS += ' -w+'
+    AFLAGS += ' -r'
+    AFLAGS += ' --cpu Cortex-M4'
+    AFLAGS += ' --fpu VFPv4_sp'
+    AFLAGS += ' -S'
+
     if BUILD == 'debug':
         CFLAGS += ' --debug'
         CFLAGS += ' -On'
@@ -138,6 +138,6 @@ elif PLATFORM == 'iar':
     LFLAGS += ' --entry __iar_program_start'
 
     CXXFLAGS = CFLAGS
-    
+
     EXEC_PATH = EXEC_PATH + '/arm/bin/'
     POST_ACTION = 'ielftool --bin $TARGET rtthread.bin'

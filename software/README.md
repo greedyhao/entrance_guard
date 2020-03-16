@@ -1,8 +1,8 @@
-# STM32F767 挑战者开发板 BSP 说明
+# STM32F411-mini-system 开发板 BSP 说明
 
 ## 简介
 
-本文档为 野火stm32f767 开发板的 BSP (板级支持包) 说明。
+本文档为 STM32F411-mini-system 开发板提供的 BSP (板级支持包) 说明。
 
 主要内容如下：
 
@@ -14,57 +14,34 @@
 
 ## 开发板介绍
 
-挑战者 STM32F767 是野火推出的一款基于 ARM Cortex-M7 内核的开发板，最高主频为 216Mhz，该开发板具有丰富的板载资源，可以充分发挥 STM32F767 的芯片性能。
+STM32F411-mini-system 是一款基于 ARM Cortex-M4 内核的开发板，最高主频为 100Mhz，该开发板芯片为 STM32F411CE。
 
 开发板外观如下图所示：
 
-![board](figures/board.jpg)
+![board](figures/board.png)
 
 该开发板常用 **板载资源** 如下：
 
-- MCU：STM32f767，主频 216MHz，1MB FLASH ，512KB RAM ，16K CACHE
-- 外部 RAM：型号，8MB
-- 外部 FLASH：型号，16MB
+- MCU：STM32F411CEU，主频 100MHz，512KB FLASH ，128KB RAM。
 - 常用外设
-  - LED：RGB灯
-  - 按键：2个，K1（兼具唤醒功能，PA0），K2（PC13）
-- 常用接口：USB 转串口、SD 卡接口、以太网接口、LCD 接口
-- 调试接口，标准 JTAG/SWD
-
-开发板更多详细信息请参考野火 [STM32 挑战者开发板介绍](https://fire-stm32.taobao.com/index.htm)。
+  - LED: 2 个, user LED (LD1), power LED (LD2)
+  - 按键: 3 个, USER, BOOT0 and RESET
+- 常用接口：USB 支持 3 种不同接口：虚拟 COM 端口、大容量存储和调试端口
+- 调试接口: SWD
 
 ## 外设支持
 
 本 BSP 目前对外设的支持情况如下：
 
-| **板载外设**      | **支持情况** | **备注**                                                |
-| :---------------- | :----------: | :------------------------------------------------------ |
-| USB 转串口        |     支持     |                                                         |
-| RS232             |     支持     | 与以太网有引脚冲突                                      |
-| QSPI Flash        |     支持     |                                                         |
-| 电位器            |     支持     | 使用 ADC1                                               |
-| 以太网            |   暂不支持   | 移植中                                                  |
-| MPU6050六轴传感器 |     支持     |                                                         |
-| SDRAM             |     支持     |                                                         |
-| LCD               |     支持     | 支持 RGB 屏                                             |
-| SD卡              |     支持     |                                                         |
-| CAN               |   即将支持   |                                                         |
-| EMW1062           |   暂不支持   |                                                         |
-| **片上外设**      | **支持情况** | **备注**                                                |
-| GPIO              |     支持     | PA0, PA1... PK15 ---> PIN: 0, 1...176                   |
-| UART              |     支持     | UART1/x/x                                               |
-| SPI               |     支持     | SPI1/x/x                                                |
-| I2C               |     支持     | 软件 I2C                                                |
-| ADC               |     支持     |                                                         |
-| RTC               |     支持     | 支持外部晶振和内部低速时钟                              |
-| WDT               |     支持     |                                                         |
-| FLASH             |     支持     | 已适配 [FAL](https://github.com/RT-Thread-packages/fal) |
-| SDIO              |     支持     |                                                         |
-| PWM               |   暂不支持   | 即将支持                                                |
-| USB Device        |   暂不支持   | 即将支持                                                |
-| USB Host          |   暂不支持   | 即将支持                                                |
-| **扩展模块**      | **支持情况** | **备注**                                                |
-| 暂无              |   暂不支持   | 暂不支持                                                |
+| **片上外设** | **支持情况** |                        **备注**                         |
+| :----------- | :----------: | :-----------------------------------------------------: |
+| GPIO         |     支持     |           PA0, PA1... PH1 ---> PIN: 0, 1...47           |
+| UART         |     支持     |                          UART1                          |
+| SPI          |     支持     |                                                         |
+| IIC          |     支持     |                                                         |
+| RTC          |     支持     |               支持外部晶振和内部低速时钟                |
+| WDT          |     支持     |                                                         |
+| FLASH        |     支持     | 已适配 [FAL](https://github.com/RT-Thread-packages/fal) |
 
 ## 使用说明
 
@@ -78,47 +55,47 @@
 
     本章节是为需要在 RT-Thread 操作系统上使用更多开发板资源的开发者准备的。通过使用 ENV 工具对 BSP 进行配置，可以开启更多板载资源，实现更多高级功能。
 
-
 ### 快速上手
 
-本 BSP 为开发者提供 MDK4、MDK5 和 IAR 工程，并且支持 GCC 开发环境。下面以 MDK5 开发环境为例，介绍如何将系统运行起来。
+本 BSP 为开发者提供 MDK5 和 IAR 工程，并且支持 GCC 开发环境。下面以 MDK5 开发环境为例，介绍如何将系统运行起来。
 
 #### 硬件连接
 
-使用数据线连接开发板到 PC，打开电源开关。
+使用 Type-A to Type-C 线连接开发板和 PC 供电，红色 LED LD2 (PWR) 会点亮。
 
 #### 编译下载
 
 双击 project.uvprojx 文件，打开 MDK5 工程，编译并下载程序到开发板。
 
-> 工程默认配置使用 Jlink 仿真器下载程序，在通过 Jlink 连接开发板的基础上，点击下载按钮即可下载程序到开发板
+> 工程默认配置使用 ST-LINK 下载程序，点击下载按钮即可下载程序到开发板。
 
 #### 运行结果
 
-下载程序成功之后，系统会自动运行，LED 闪烁。
+下载程序成功之后，系统会自动运行，观察开发板上 LED 的运行效果，红色 LD2 常亮、绿色 LD1 会周期性闪烁。
 
-连接开发板对应串口到 PC , 在终端工具里打开相应的串口（115200-8-1-N），复位设备后，可以看到 RT-Thread 的输出信息:
+COM 端口默认连接串口 2，在终端工具里打开相应的串口（115200-8-1-N），复位设备后，可以看到 RT-Thread 的输出信息:
 
 ```bash
  \ | /
 - RT -     Thread Operating System
- / | \     4.0.0 build Dec 10 2018
- 2006 - 2018 Copyright by rt-thread team
+ / | \     4.0.3 build Feb 27 2020
+ 2006 - 2020 Copyright by rt-thread team
 msh >
 ```
+
 ### 进阶使用
 
-此 BSP 默认只开启了 GPIO 和 串口1 的功能，如果需使用 SD 卡、Flash 等更多高级功能，需要利用 ENV 工具对BSP 进行配置，步骤如下：
+此 BSP 默认只开启了 GPIO 和 串口 1 的功能，更多高级功能需要利用 ENV 工具对 BSP 进行配置，步骤如下：
 
-1. 在 bsp 下打开 env 工具。
+1. 在 BSP 下打开 env 工具。
 
-2. 输入`menuconfig`命令配置工程，配置好之后保存退出。
+2. 输入 `menuconfig` 命令配置工程，配置好之后保存退出。
 
-3. 输入`pkgs --update`命令更新软件包。
+3. 输入 `pkgs --update` 命令更新软件包。
 
-4. 输入`scons --target=mdk4/mdk5/iar` 命令重新生成工程。
+4. 输入 `scons --target=mdk4/mdk5/iar` 命令重新生成工程。
 
-本章节更多详细的介绍请参考 [STM32 系列 BSP 外设驱动使用教程](../docs/STM32系列BSP外设驱动使用教程.md)。
+本章节更多详细的介绍请参考 [STM32 系列 BSP 外设驱动使用教程](../docs/STM32 系列 BSP 外设驱动使用教程. md)。
 
 ## 注意事项
 
@@ -128,4 +105,4 @@ msh >
 
 维护人:
 
--  [greedyhao](https://github.com/greedyhao), 邮箱：<hao_kr@163.com>
+- [greedyhao](https://github.com/greedyhao) ，邮箱：<hao_kr@163.com>

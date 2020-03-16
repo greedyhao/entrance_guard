@@ -12,14 +12,22 @@
 #include <rtdevice.h>
 #include <board.h>
 
-/* defined the LED0 pin: PH10 */
-#define LED0_PIN    GET_PIN(H, 10)
+#include <stdlib.h>
+#include <string.h>
+#include "fal.h"
+#include "easyflash.h"
+
+/* defined the LED0 pin: PC13 */
+#define LED0_PIN               GET_PIN(C, 13)
 
 int main(void)
 {
     int count = 1;
     /* set LED0 pin mode to output */
     rt_pin_mode(LED0_PIN, PIN_MODE_OUTPUT);
+
+    fal_init();
+    easyflash_init();
 
     while (count++)
     {

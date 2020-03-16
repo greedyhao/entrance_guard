@@ -31,7 +31,9 @@ static char *const sensor_name_str[] =
     "tvoc_",     /* TVOC Level        */
     "noi_",      /* Noise Loudness    */
     "step_",     /* Step sensor       */
-    "forc_"      /* Force sensor      */
+    "forc_",     /* Force sensor      */
+    "dust_",     /* Dust sensor       */
+    "eco2_"      /* eCO2 sensor       */
 };
 
 /* Sensor interrupt correlation function */
@@ -430,10 +432,12 @@ int rt_hw_sensor_register(rt_sensor_t sensor,
     result = rt_device_register(device, device_name, flag | RT_DEVICE_FLAG_STANDALONE);
     if (result != RT_EOK)
     {
+        rt_free(device_name);
         LOG_E("rt_sensor register err code: %d", result);
         return result;
     }
 
+    rt_free(device_name);
     LOG_I("rt_sensor init success");
     return RT_EOK;
 }

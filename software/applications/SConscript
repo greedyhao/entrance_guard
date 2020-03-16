@@ -5,9 +5,9 @@ cwd     = GetCurrentDir()
 CPPPATH = [cwd, str(Dir('#'))]
 src     = Split("""
 main.c
+ef_fal_port.c
 entry_key.c
 reg_key_fp.c
-reg_key_rc.c
 """)
 
 group = DefineGroup('Applications', src, depend = [''], CPPPATH = CPPPATH)

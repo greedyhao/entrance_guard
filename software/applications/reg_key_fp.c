@@ -7,7 +7,9 @@
 #define DBG_LVL              DBG_LOG
 #include <rtdbg.h>
 
+#ifndef AS60X_UART_NAME
 #define AS60X_UART_NAME "uart3"
+#endif
 
 static struct entry_key en_key_fp = {0};
 static uint8_t fp_id[KEY_ID_MAX] = {0};

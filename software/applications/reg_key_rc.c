@@ -99,5 +99,5 @@ static int rt_hw_rc_port(void)
 
     return 0;
 }
-INIT_ENV_EXPORT(rt_hw_rc_port);
+//INIT_ENV_EXPORT(rt_hw_rc_port);
 
