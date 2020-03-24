@@ -12,11 +12,6 @@
 #include <rtdevice.h>
 #include <board.h>
 
-#include <stdlib.h>
-#include <string.h>
-#include "fal.h"
-#include "easyflash.h"
-
 /* defined the LED0 pin: PC13 */
 #define LED0_PIN               GET_PIN(C, 13)
 

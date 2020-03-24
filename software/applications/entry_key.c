@@ -1,14 +1,20 @@
-#include "entry_key.h"
 #include <rtthread.h>
 #include <rtdevice.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#include "entry_key.h"
+#include "fal.h"
+#include "easyflash.h"
 
 #define DBG_TAG              "key.main"
 // #define DBG_LVL              DBG_INFO
 #define DBG_LVL              DBG_LOG
 #include <rtdbg.h>
 
-static const char key_desc[CFG_KEY_USING_NUM][3] = { "PW","FP","RF","FD" };
-static char *key_point[CFG_KEY_USING_NUM] = {0}; // 需要空间
+static const char key_desc[CFG_KEY_TOTAL_NUM][3] = { "PW","FP","RF","FD" };
+static char *key_point[CFG_KEY_TOTAL_NUM] = {0}; // Using before malloc()!
 static entry_key_t key_table[KEY_TYPES_MAX] = {0};
 static rt_event_t kdet_evt = RT_NULL;
 static uint8_t flag_add_key = 0;
@@ -62,7 +68,7 @@ uint16_t check_auth(void)
     uint32_t set = 0;
 
     rt_event_recv(kdet_evt, (EVT_KEY_DET_FP|EVT_KEY_DET_RF), RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &set);
-    if (flag_add_key) // 娣诲姞閽ュ寵鏃剁瓑寰�
+    if (flag_add_key)
         return id;
     switch (set)
     {
@@ -109,12 +115,18 @@ void add_auth_test(void *p)
 }
 MSH_CMD_EXPORT(add_auth_test, "add auth test");
 
-static size_t value_wrap(uint8_t flag, user_info_t info, void *value_buf, size_t buf_len)
+/**
+ *
+ * @param flag 0:value_buf->info 1:info->value_buf
+ * @param info
+ * @param value_buf
+ * @param buf_len
+ */
+static void value_wrap(uint8_t flag, user_info_t info, void *value_buf, size_t buf_len)
 {
     char desc_buf[2];
     uint8_t tmp;
     char *tmp_str = NULL;
-    size_t len = 0;
     uint8_t i;
 
     if (flag == 1) {
@@ -138,36 +150,66 @@ static size_t value_wrap(uint8_t flag, user_info_t info, void *value_buf, size_t
     }
 }
 
-static void input_id(user_info_t info)
+static void input_user_name(user_info_t info)
 {
+    RT_ASSERT(info->name != NULL);
     char user_name[4] = "001";
-    char buff[USER_KEY_LEN];
+    char buff[USER_INFO_SIZE];
     size_t size;
 
 #ifdef CFG_USING_KEYBOARD
-
+    // TODO need keyboard control
 #else
     memcpy(info->name, user_name, USER_NAME_LEN);
 #endif
     ef_get_env_blob(info->name, NULL, 0, &size);
-    if (size != 0) {
-        ef_get_env_blob(info->name, buff, size, NULL);
+    if (size != 0) { // Fulfill info->name
+        ef_get_env_blob(user_name, buff, USER_INFO_SIZE, NULL);
+        value_wrap(0, info, buff, USER_INFO_SIZE);
     }
 }
-static void check_user_auth();
-static void input_key();
-static void save_info(user_info_t info)
+
+static rt_err_t check_user_auth(const user_info_t info)
 {
-//    ef_set_env_blob(info->name, )
+    char root[ROOT_USER_LEN] = {0};
+    ef_get_env_blob("root", root, ROOT_USER_LEN, NULL);
+
+    if (strlen(root) < USER_NAME_LEN) { // zero root user
+        return RT_EOK;
+    }
+    if (strstr(root, info->name) != NULL) {
+        return RT_EOK;
+    }
+
+    return RT_ERROR;
 }
 
-void add_user(void)
+static void input_user_key()
 {
+//    TODO make some choice here
+//    1. enter a root or normal user
+//    2. enter the key type
+}
+
+static void save_user_info(user_info_t info)
+{
+    char buff[USER_INFO_SIZE];
+    value_wrap(1, info, buff, USER_INFO_SIZE);
+    LOG_D("save_user_info:%s", buff);
+    ef_set_env_blob(info->name, buff, USER_INFO_SIZE);
+}
+
+rt_err_t add_user(void)
+{
+    rt_err_t ret = RT_EOK;
     struct user_info info = {0};
-    input_id(&info);
-    check_user_auth();
-    input_key();
-    save_info(&info);
+    input_user_name(&info);
+    ret = check_user_auth(&info);
+    if (ret != RT_EOK)
+        return ret;
+    input_user_key();
+    save_user_info(&info);
+    return ret;
 }
 
 static int entry_key_init(void)
@@ -184,6 +226,7 @@ static int entry_key_init(void)
 #if CFG_KEY_USING_FD
     key_point[ENTRY_KEY_FD] = calloc(USER_KEY_LEN, sizeof(char));
 #endif
+
 
     kdet_evt = rt_event_create("kdet-evt", RT_IPC_FLAG_FIFO);
     if (RT_NULL == kdet_evt)

@@ -9,8 +9,8 @@
 #define CFG_KEY_USING_FP    1
 #define CFG_KEY_USING_RF    1
 #define CFG_KEY_USING_FD    0
-//#define CFG_KEY_USING_NUM   (CFG_KEY_USING_PW + CFG_KEY_USING_FP + CFG_KEY_USING_RF + CFG_KEY_USING_FD)
-#define CFG_KEY_USING_NUM   4
+#define CFG_KEY_USING_NUM   (CFG_KEY_USING_PW + CFG_KEY_USING_FP + CFG_KEY_USING_RF + CFG_KEY_USING_FD)
+#define CFG_KEY_TOTAL_NUM   4
 
 //#define CFG_USING_KEYBOARD
 
@@ -22,8 +22,9 @@
 #define KEY_VER_WAIT_TIME 20
 #define KEY_VER_ERROR 255U
 
-#define USER_INFO_SIZE  (KEY_TYPES_ON_SIZE)*(KEY_INFO_LEN)
-//static uint8_t key_types = 0; // ÔİÊ±Ïë²»³öºÃµÄ´¦Àí·½Ê½£¬ÏÈÔ¤ÏÈÉèÖÃ°É
+#define ROOT_USER_LEN   ((USER_NAME_LEN+1)*3) // 1æ˜¯åˆ†å‰²ç¬¦çš„é•¿åº¦
+#define USER_INFO_SIZE  (CFG_KEY_USING_NUM)*(USER_KEY_LEN+1) // 1æ˜¯åˆ†å‰²ç¬¦çš„é•¿åº¦
+//static uint8_t key_types = 0; // æš‚æ—¶æƒ³ä¸å‡ºå¥½çš„å¤„ç†æ–¹å¼ï¼Œå…ˆé¢„å…ˆè®¾ç½®å§
 
 #define EVT_KEY_DET_PW (1U << 0)
 #define EVT_KEY_DET_FP (1U << 1)
