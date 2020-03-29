@@ -12,8 +12,6 @@
 #define CFG_KEY_USING_NUM   (CFG_KEY_USING_PW + CFG_KEY_USING_FP + CFG_KEY_USING_RF + CFG_KEY_USING_FD)
 #define CFG_KEY_TOTAL_NUM   4
 
-//#define CFG_USING_KEYBOARD
-
 //#define KEY_TYPES_ON_SIZE   2
 #define USER_NAME_LEN 4
 #define USER_KEY_LEN 16
@@ -22,15 +20,32 @@
 #define KEY_VER_WAIT_TIME 20
 #define KEY_VER_ERROR 255U
 
+#define PW_KEY_LEN      6U
+#define FP_KEY_LEN      6U
+#define RF_KEY_LEN      6U
+#define FD_KEY_LEN      6U
+
 #define ROOT_USER_LEN   ((USER_NAME_LEN+1)*3) // 1是分割符的长度
 #define USER_INFO_SIZE  (CFG_KEY_USING_NUM)*(USER_KEY_LEN+1) // 1是分割符的长度
 //static uint8_t key_types = 0; // 暂时想不出好的处理方式，先预先设置吧
 
-#define EVT_KEY_DET_PW (1U << 0)
-#define EVT_KEY_DET_FP (1U << 1)
-#define EVT_KEY_DET_RF (1U << 2)
-#define EVT_KEY_DET_FD (1U << 3)
+#define EVT_GRD_DET_PW (1U << 0)
+#define EVT_GRD_DET_FP (1U << 1)
+#define EVT_GRD_DET_RF (1U << 2)
+#define EVT_GRD_DET_FD (1U << 3)
+
+#define EVT_KEY_DET_PW (1U << 4)
+#define EVT_KEY_DET_FP (1U << 5)
+#define EVT_KEY_DET_RF (1U << 6)
+#define EVT_KEY_DET_FD (1U << 7)
 /** key configure end */
+
+enum wkng_mode_type
+{
+    WKNG_MODE_ROOT=0,
+    WKNG_MODE_NORM,
+    WKNG_MODE_IDLE,
+};
 
 enum entry_key_type
 {

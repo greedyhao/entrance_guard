@@ -10,13 +10,19 @@
 
 #include "matrix_keypad.h"
 #include "drv_gpio.h"
+#include "entry_key.h"
 
 static struct keypad _pad;
 static uint8_t pad_col[] = {GET_PIN(B, 5), GET_PIN(B, 4), GET_PIN(B, 3)};
 static uint8_t pad_row[] = {GET_PIN(B, 9), GET_PIN(B, 8), GET_PIN(B, 7), GET_PIN(B, 6)};
 
+static void pad_event_send(uint8_t value)
+{
+    if (value == 12)
+        rt_event_send(get_key_det_evt(), EVT_GRD_DET_PW);
+}
 
-void keypad_thread_entry(void* p)
+static void keypad_thread_entry(void* p)
 {
     while(1)
     {
@@ -30,6 +36,7 @@ int matrix_keypad_test(void)
 {
     rt_thread_t thread = RT_NULL;
 
+    _pad.callback = pad_event_send;
     keypad_init(&_pad, pad_col, sizeof(pad_col)/sizeof(uint8_t), pad_row, sizeof(pad_row)/sizeof(uint8_t));
 
     /* Create background ticks thread */

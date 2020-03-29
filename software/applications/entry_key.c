@@ -4,9 +4,11 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <board.h>
 #include "entry_key.h"
 #include "fal.h"
 #include "easyflash.h"
+#include "matrix_keypad.h"
 
 #define DBG_TAG              "key.main"
 // #define DBG_LVL              DBG_INFO
@@ -17,6 +19,7 @@ static const char key_desc[CFG_KEY_TOTAL_NUM][3] = { "PW","FP","RF","FD" };
 static char *key_point[CFG_KEY_TOTAL_NUM] = {0}; // Using before malloc()!
 static entry_key_t key_table[KEY_TYPES_MAX] = {0};
 static rt_event_t kdet_evt = RT_NULL;
+static enum wkng_mode_type flag_wkng_mode = WKNG_MODE_NORM; // working mode 0:root 1:normal 2:idle
 static uint8_t flag_add_key = 0;
 
 /**
@@ -67,7 +70,7 @@ uint16_t check_auth(void)
     uint16_t id = KEY_VER_ERROR;
     uint32_t set = 0;
 
-    rt_event_recv(kdet_evt, (EVT_KEY_DET_FP|EVT_KEY_DET_RF), RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &set);
+//    rt_event_recv(kdet_evt, (EVT_KEY_DET_FP|EVT_KEY_DET_RF), RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &set);
     if (flag_add_key)
         return id;
     switch (set)
@@ -152,31 +155,41 @@ static void value_wrap(uint8_t flag, user_info_t info, void *value_buf, size_t b
 
 static void input_user_name(user_info_t info)
 {
-    RT_ASSERT(info->name != NULL);
-    char user_name[4] = "001";
-    char buff[USER_INFO_SIZE];
-    size_t size;
+//    RT_ASSERT(info->name != NULL);
+    char user_name[USER_NAME_LEN] = "001";
+    char buff[USER_INFO_SIZE] = {0};
 
-#ifdef CFG_USING_KEYBOARD
-    // TODO need keyboard control
-#else
-    memcpy(info->name, user_name, USER_NAME_LEN);
-#endif
-    ef_get_env_blob(info->name, NULL, 0, &size);
-    if (size != 0) { // Fulfill info->name
-        ef_get_env_blob(user_name, buff, USER_INFO_SIZE, NULL);
-        value_wrap(0, info, buff, USER_INFO_SIZE);
+    uint8_t buffer[KEYPAD_FIFO_SIZE] = {0};
+    uint8_t len = 0;
+    uint8_t i = 0;
+    uint8_t j = 0;
+    rt_event_recv(kdet_evt, EVT_GRD_DET_PW, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, NULL);
+    len = keypad_get_len();
+    keypad_get_n_value(buffer, len);
+    if (len > USER_NAME_LEN)
+        i = len - USER_NAME_LEN;
+    for (; i < len-1; ++i) {
+        user_name[j++] = keypad_num_table[buffer[i]];
+    }
+    strcpy(info->name, user_name);
+    rt_kprintf("%s\n", info->name);
+
+    ef_get_env_blob(info->name, buff, USER_INFO_SIZE, NULL);
+    if (strlen(buff) > USER_NAME_LEN) { // Fulfill info->name
+        rt_kprintf("user:%s is in flash, buff:%s\n", info->name, buff);
     }
 }
 
-static rt_err_t check_user_auth(const user_info_t info)
+static rt_err_t check_root_auth(const user_info_t info)
 {
-    char root[ROOT_USER_LEN] = {0};
-    ef_get_env_blob("root", root, ROOT_USER_LEN, NULL);
+    char root[(USER_NAME_LEN+1)*3] = {0};
+    ef_get_env_blob("root", root, (USER_NAME_LEN+1)*3, NULL);
 
     if (strlen(root) < USER_NAME_LEN) { // zero root user
+        ef_set_env_blob("root", info->name, USER_NAME_LEN);
         return RT_EOK;
     }
+
     if (strstr(root, info->name) != NULL) {
         return RT_EOK;
     }
@@ -187,8 +200,19 @@ static rt_err_t check_user_auth(const user_info_t info)
 static void input_user_key()
 {
 //    TODO make some choice here
-//    1. enter a root or normal user
-//    2. enter the key type
+//    1. enter the key type
+    uint8_t buffer[KEYPAD_FIFO_SIZE];
+    uint8_t len = 0;
+    uint8_t i = 0;
+    rt_event_recv(kdet_evt, EVT_GRD_DET_PW, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, NULL);
+    len = keypad_get_len();
+    keypad_get_n_value(buffer, len);
+    if (len > FP_KEY_LEN)
+        i = len - FP_KEY_LEN;
+    for (; i < len; ++i) {
+        rt_kprintf("%d ", buffer[i]);
+    }
+    rt_kprintf("\n");
 }
 
 static void save_user_info(user_info_t info)
@@ -199,20 +223,111 @@ static void save_user_info(user_info_t info)
     ef_set_env_blob(info->name, buff, USER_INFO_SIZE);
 }
 
-rt_err_t add_user(void)
+rt_err_t guard_add_usr(void)
 {
     rt_err_t ret = RT_EOK;
     struct user_info info = {0};
     input_user_name(&info);
-    ret = check_user_auth(&info);
-    if (ret != RT_EOK)
-        return ret;
     input_user_key();
     save_user_info(&info);
     return ret;
 }
 
-static int entry_key_init(void)
+void stop_test(void *p)
+{
+    HAL_PWR_EnterSTOPMode(PWR_MAINREGULATOR_ON, PWR_STOPENTRY_WFI);
+}
+MSH_CMD_EXPORT(stop_test, "stop test");
+
+/**
+ *
+ * @param mode
+ */
+void guard_set_wkng_mode(enum wkng_mode_type mode)
+{
+    flag_wkng_mode = mode;
+}
+
+//void guard_menu(void)
+//{
+//    keypad_get_value();
+//}
+
+/**
+ * password event process
+ */
+static void pw_evt_proc(void)
+{
+    uint8_t buffer[KEYPAD_FIFO_SIZE];
+    uint8_t len = keypad_get_len();
+    LOG_D("pad data len:%d", len);
+    keypad_get_n_value(buffer, len);
+
+#if DBG_LVL == DBG_LOG
+//    for (int i = 0; i < len; ++i) {
+//        rt_kprintf("%d ", buffer[i]);
+//    }
+//    rt_kprintf("\n");
+#endif
+
+    if (2 == len)
+    {
+        if (KEYPAD_NUM_STAR == buffer[0])
+            guard_set_wkng_mode(WKNG_MODE_ROOT);
+    }
+}
+
+static void wait_key_single(rt_int32_t timeout)
+{
+    rt_uint32_t set = 0;
+    rt_event_recv(kdet_evt, EVT_GRD_DET_PW|EVT_GRD_DET_FP|EVT_GRD_DET_RF|EVT_GRD_DET_FD, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, &set);
+    switch (set) {
+        case EVT_GRD_DET_PW:
+            rt_kprintf("get keypad event\n");
+            pw_evt_proc();
+            break;
+        case EVT_GRD_DET_FP:
+            rt_kprintf("get finger print event\n");
+            break;
+        case EVT_GRD_DET_RF:
+            rt_kprintf("get RF event\n");
+            break;
+        case EVT_GRD_DET_FD:
+            rt_kprintf("get face event\n");
+            break;
+        default:
+            break;
+    }
+}
+
+static void guard_wkng_thread(void *p)
+{
+    struct user_info info = {""};
+    rt_err_t ret = RT_EOK;
+
+    while (1)
+    {
+        switch (flag_wkng_mode) {
+            case WKNG_MODE_ROOT:
+                input_user_name(&info);
+                ret = check_root_auth(&info);
+                if (!ret) rt_kprintf("root check ok!\n");
+                guard_set_wkng_mode(WKNG_MODE_NORM);
+                break;
+            case WKNG_MODE_NORM:
+                wait_key_single(50); //event?
+                break;
+            case WKNG_MODE_IDLE:
+//                rt_kprintf("C");
+                break;
+            default:
+                break;
+        }
+    }
+
+}
+
+static int entry_guard_init(void)
 {
 #if CFG_KEY_USING_PW
     key_point[ENTRY_KEY_PW] = calloc(USER_KEY_LEN, sizeof(char));
@@ -233,9 +348,9 @@ static int entry_key_init(void)
         LOG_E("create kdet_evt failed!\n");
 
     rt_thread_t tid = RT_NULL;
-    tid = rt_thread_create("kdet-tid", check_auth_test, RT_NULL, 512, 14, 10);
+    tid = rt_thread_create("grd-tid", guard_wkng_thread, RT_NULL, 1024, 14, 10);
     if (tid != RT_NULL)
-//        rt_thread_startup(tid);
+        rt_thread_startup(tid);
     return 0;
 }
-//INIT_COMPONENT_EXPORT(entry_key_init);
+INIT_COMPONENT_EXPORT(entry_guard_init);
