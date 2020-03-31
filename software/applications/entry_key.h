@@ -5,7 +5,7 @@
 #include <rtdevice.h>
 
 /** key configure */
-#define CFG_KEY_USING_PW    0
+#define CFG_KEY_USING_PW    1
 #define CFG_KEY_USING_FP    1
 #define CFG_KEY_USING_RF    1
 #define CFG_KEY_USING_FD    0

@@ -1,8 +1,8 @@
 #include "matrix_keypad.h"
 
 #define DBG_TAG              "kepad.src"
-// #define DBG_LVL              DBG_INFO
-#define DBG_LVL              DBG_LOG
+ #define DBG_LVL              DBG_INFO
+//#define DBG_LVL              DBG_LOG
 #include <rtdbg.h>
 
 static struct keypad_fifo _fifo = {0};

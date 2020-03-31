@@ -40,7 +40,7 @@ int matrix_keypad_test(void)
     keypad_init(&_pad, pad_col, sizeof(pad_col)/sizeof(uint8_t), pad_row, sizeof(pad_row)/sizeof(uint8_t));
 
     /* Create background ticks thread */
-    thread = rt_thread_create("pad", keypad_thread_entry, RT_NULL, 1024, 10, 10);
+    thread = rt_thread_create("pad", keypad_thread_entry, RT_NULL, 512, 10, 10);
     if(thread == RT_NULL)
     {
         return RT_ERROR;
