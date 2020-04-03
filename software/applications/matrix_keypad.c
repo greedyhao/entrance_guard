@@ -7,7 +7,7 @@
 
 static struct keypad_fifo _fifo = {0};
 static struct keypad *_handle;
-static rt_sem_t keypad_sem = NULL;
+//static rt_sem_t keypad_sem = NULL;
 
 /**
  *
@@ -150,7 +150,7 @@ static void keypad_handler(struct keypad *handle)
                 handle->ticks = 0;
                 handle->state = 0;
                 tmp = keypad_fifo_write(key_val);
-                handle->callback(tmp);
+                handle->event_send(tmp);
                 LOG_D("key_val:%d fifo:%d count:%d", key_val, tmp, _fifo.count);
             }
             break;
@@ -193,7 +193,7 @@ uint8_t keypad_get_len(void)
     return _fifo.count;
 }
 
-void keypad_get_n_value(uint8_t *buffer, uint8_t len)
+void keypad_get_n_value(char *buffer, uint8_t len)
 {
     uint8_t i;
     for (i=0; i<len; i++)
@@ -202,7 +202,35 @@ void keypad_get_n_value(uint8_t *buffer, uint8_t len)
     }
 }
 
+/**
+ * @brief needed to realize event_send() event_recv()
+ * @param buffer
+ * @param len
+ */
+void keypad_get_n_value_b(char *buffer, uint8_t *len)
+{
+    _handle->event_recv(RT_WAITING_FOREVER);
+    *len = keypad_get_len();
+    keypad_get_n_value(buffer, *len);
+}
+
+void keypad_num_to_str(char *buffer, uint8_t len)
+{
+    uint8_t i = 0;
+    for (i=0; i<len; i++)
+    {
+        buffer[i] = keypad_num_table[(uint8_t)buffer[i]];
+    }
+}
+
+
 #if 0
+void keypad_get_len_test()
+{
+    rt_kprintf("keypad_get_len:%d\n", keypad_get_len());
+}
+MSH_CMD_EXPORT(keypad_get_len_test, "keypad_get_len_test");
+
 void keypad_pin_read_test(int argc, char**argv)
 {
     if (!strcmp(argv[1], "1")) {

@@ -18,8 +18,13 @@ static uint8_t pad_row[] = {GET_PIN(B, 9), GET_PIN(B, 8), GET_PIN(B, 7), GET_PIN
 
 static void pad_event_send(uint8_t value)
 {
-    if (value == 12)
+    if (value == KEYPAD_NUM_POUND)
         rt_event_send(get_key_det_evt(), EVT_GRD_DET_PW);
+}
+
+static void pad_event_recv(int32_t timeout)
+{
+    rt_event_recv(get_key_det_evt(), EVT_GRD_DET_PW, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, NULL);
 }
 
 static void keypad_thread_entry(void* p)
@@ -36,7 +41,8 @@ int matrix_keypad_test(void)
 {
     rt_thread_t thread = RT_NULL;
 
-    _pad.callback = pad_event_send;
+    _pad.event_send = pad_event_send;
+    _pad.event_recv = pad_event_recv;
     keypad_init(&_pad, pad_col, sizeof(pad_col)/sizeof(uint8_t), pad_row, sizeof(pad_row)/sizeof(uint8_t));
 
     /* Create background ticks thread */

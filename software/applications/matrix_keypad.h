@@ -23,7 +23,7 @@
 #define KEYPAD_FIFO_EMPTY       0x00
 #define KEYPAD_FIFO_FULL        0xff
 
-static const uint8_t keypad_num_table[] = {
+static const char keypad_num_table[] = {
         'K',
         '1', '2', '3',
         '4', '5', '6',
@@ -48,7 +48,7 @@ enum
 };
 
 struct keypad_fifo {
-    uint8_t buffer[KEYPAD_FIFO_SIZE];
+    char buffer[KEYPAD_FIFO_SIZE];
     uint16_t head;
     uint16_t tail;
     uint16_t count;
@@ -67,13 +67,16 @@ struct keypad {
     uint8_t  row_size;
     uint8_t  x;
     uint8_t  y;
-    void    (*callback)(uint8_t value);
+    void    (*event_send)(uint8_t value);
+    void    (*event_recv)(int32_t timeout);
 };
 
 void keypad_init(struct keypad *handle, uint8_t *col, uint8_t col_size, uint8_t *row, uint8_t row_size);
 void keypad_ticks(void);
 uint8_t keypad_get_value(void);
 uint8_t keypad_get_len(void);
-void keypad_get_n_value(uint8_t *buffer, uint8_t len);
+void keypad_get_n_value(char *buffer, uint8_t len);
+void keypad_get_n_value_b(char *buffer, uint8_t *len);
+void keypad_num_to_str(char *buffer, uint8_t len);
 
 #endif /* _MATRIX_KEYPAD_H_ */
