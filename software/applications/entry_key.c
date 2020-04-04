@@ -120,7 +120,19 @@ MSH_CMD_EXPORT(add_auth_test, "add auth test");
 //TODO add a func to control door open
 static void lock_control(uint16_t lock_state)
 {
-//    LOG_I("lock_state:%d", lock_state);
+    static uint8_t tick;
+    if (lock_state == USR_CHECK_AUTH_OK) {
+        tick = 41;
+        rt_pin_write(LOCK_PIN_NUM, PIN_HIGH);
+        LOG_I("door open!");
+    }
+    if (tick > 0) {
+        tick--;
+    }
+    if (tick == 1) {
+        rt_pin_write(LOCK_PIN_NUM, PIN_LOW);
+        LOG_I("door close!");
+    }
 }
 
 uint8_t if_key_in_flash(const char *key_type, char *name, const char *key)
@@ -134,9 +146,9 @@ uint8_t if_key_in_flash(const char *key_type, char *name, const char *key)
     if (name_p != NULL)
     {
         strncpy(name, name_p-(NAME_STR_LEN+1), NAME_STR_LEN);
-        return 0;
+        return USR_CHECK_AUTH_OK;
     }
-    return 1;
+    return USR_CHECK_AUTH_ERR;
 }
 
 /**
@@ -407,10 +419,10 @@ void guard_set_wkng_mode(enum wkng_mode_type mode)
 /**
  * password event process
  */
-static uint8_t pw_evt_proc(void)
+static uint8_t pw_evt_proc(char *name)
 {
     char buffer[KEYPAD_FIFO_SIZE] = {0};
-    uint8_t ret = 0;
+    uint8_t ret = USR_CHECK_AUTH_ERR;
     uint8_t len = 0;
     rt_event_send(kdet_evt, EVT_GRD_DET_PW);
     guard_get_value_from_outcome(buffer, &len);
@@ -431,43 +443,42 @@ static uint8_t pw_evt_proc(void)
 
     if (len >= PW_KEY_LEN)
     {
-        char name[NAME_BUF_LEN] = {""};
-        pw_ver_key(name, buffer, len);
+        ret = pw_ver_key(name, buffer, len);
 //        ret = key_table[ENTRY_KEY_PW]->ver_key(name);
         rt_kprintf("name:%s buffer:%s\n", name, buffer);
     }
     return ret;
 }
 
-static uint8_t fp_evt_proc(void)
+static uint8_t fp_evt_proc(char *name)
 {
     rt_kprintf("TODO\n");
     return 0;
 }
 
-static uint8_t rf_evt_proc(void)
+static uint8_t rf_evt_proc(char *name)
 {
     rt_kprintf("TODO\n");
     return 0;
 }
 
-static void wait_key_single(rt_int32_t timeout)
+static uint8_t wait_key_single(char *name, rt_int32_t timeout)
 {
     rt_uint32_t set = 0;
-    uint8_t key_ver_ok = 0;
+    uint8_t ret = USR_CHECK_AUTH_ERR;
     rt_event_recv(kdet_evt, EVT_GRD_DET_PW|EVT_GRD_DET_FP|EVT_GRD_DET_RF|EVT_GRD_DET_FD, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, &set);
     switch (set) {
         case EVT_GRD_DET_PW:
             LOG_D("get keypad event");
-            key_ver_ok = pw_evt_proc();
+            ret = pw_evt_proc(name);
             break;
         case EVT_GRD_DET_FP:
             rt_kprintf("get finger print event\n");
-            key_ver_ok = fp_evt_proc();
+            ret = fp_evt_proc(name);
             break;
         case EVT_GRD_DET_RF:
             rt_kprintf("get RF event\n");
-            key_ver_ok = rf_evt_proc();
+            ret = rf_evt_proc(name);
             break;
         case EVT_GRD_DET_FD:
             rt_kprintf("get face event\n");
@@ -475,14 +486,15 @@ static void wait_key_single(rt_int32_t timeout)
         default:
             break;
     }
-//    TODO 添加 自动关锁模式 和 普通模式 的开锁接口
-    lock_control(key_ver_ok);
+    return ret;
 }
 
 static void guard_wkng_thread(void *p)
 {
     struct user_info info = {"", "0", "0", "0", "0"};
+    char name[NAME_BUF_LEN] = {""};
     rt_err_t ret = RT_EOK;
+    uint8_t key_ver_ok = USR_CHECK_AUTH_ERR;
     uint8_t option = 0;
 
     while (1)
@@ -504,7 +516,8 @@ static void guard_wkng_thread(void *p)
                 guard_set_wkng_mode(WKNG_MODE_NORM);
                 break;
             case WKNG_MODE_NORM:
-                wait_key_single(50); //event?
+                key_ver_ok = wait_key_single(name, 50); //event?
+                lock_control(key_ver_ok); ///< 门锁控制，自动关门
                 break;
             case WKNG_MODE_IDLE:
 //                rt_kprintf("C");
@@ -518,6 +531,9 @@ static void guard_wkng_thread(void *p)
 
 static int entry_guard_init(void)
 {
+    rt_pin_mode(LOCK_PIN_NUM, PIN_MODE_OUTPUT);
+    rt_pin_write(LOCK_PIN_NUM, PIN_LOW);
+
     kdet_evt = rt_event_create("kdet-evt", RT_IPC_FLAG_FIFO);
     if (RT_NULL == kdet_evt)
         LOG_E("create kdet_evt failed!\n");
@@ -528,4 +544,4 @@ static int entry_guard_init(void)
         rt_thread_startup(tid);
     return 0;
 }
-INIT_COMPONENT_EXPORT(entry_guard_init);
+INIT_ENV_EXPORT(entry_guard_init);

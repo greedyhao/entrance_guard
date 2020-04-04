@@ -44,6 +44,11 @@
 #define EVT_KEY_DET_FP (1U << 5)
 #define EVT_KEY_DET_RF (1U << 6)
 #define EVT_KEY_DET_FD (1U << 7)
+
+#define USR_CHECK_AUTH_OK   0
+#define USR_CHECK_AUTH_ERR  1
+
+#define LOCK_PIN_NUM    GET_PIN(B, 14)
 /** key configure end */
 
 enum

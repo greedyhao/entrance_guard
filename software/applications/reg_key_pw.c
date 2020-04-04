@@ -58,19 +58,21 @@ static void tmp_transform_keypad_input(char *tmp_buf, uint8_t len)
     memset(tmp_buf+PW_KEY_LEN, '\0', KEYPAD_FIFO_SIZE-PW_KEY_LEN);
 }
 
-//    TODO 修复 PW 类型接口无法匹配现有架构
+// TODO 修复 PW 类型接口无法匹配现有架构
+// - 可以考虑通过特定按键进入密码匹配模式
 //static uint8_t pw_ver_key(char *name)
 uint8_t pw_ver_key(char *name, char *key, uint8_t len)
 {
+    uint8_t ret = USR_CHECK_AUTH_ERR;
 //    RT_ASSERT(name != NULL);
 //    char tmp_buf[KEYPAD_FIFO_SIZE] = {""};
 //    transform_keypad_input(tmp_buf, KEYPAD_FIFO_SIZE);
 //    if_key_in_flash("pw-key", name, tmp_buf);
 //    rt_kprintf("name:%s key:%s\n", name, tmp_buf);
     tmp_transform_keypad_input(key, len);
-    if_key_in_flash("pw-key", name, key);
+    ret = if_key_in_flash("pw-key", name, key);
     rt_kprintf("name:%s key:%s\n", name, key);
-    return 0;
+    return ret;
 }
 MSH_CMD_EXPORT(pw_ver_key, "pw_ver_key");
 
@@ -86,4 +88,4 @@ static int rt_hw_pw_port(void)
 
     return 0;
 }
-INIT_ENV_EXPORT(rt_hw_pw_port);
+INIT_APP_EXPORT(rt_hw_pw_port);
