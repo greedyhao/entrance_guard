@@ -41,7 +41,7 @@ static void pw_add_key(user_info_t info)
 
 static void pw_del_key(user_info_t info)
 {
-    strcpy(info->key_pw, "0");
+    strcpy(info->key_pw, "xxxxxx");
     del_key_in_flash("pw-key", info->name, info->key_pw); ///> delete password in flash
 }
 
@@ -76,14 +76,11 @@ uint8_t pw_ver_key(char *name, char *key, uint8_t len)
 }
 MSH_CMD_EXPORT(pw_ver_key, "pw_ver_key");
 
-static uint8_t pw_has_key(uint16_t id){ rt_kprintf("TODO\n");return 0;}
-
 static int rt_hw_pw_port(void)
 {
     en_key_pw.add_key = pw_add_key;
     en_key_pw.del_key = pw_del_key;
 //    en_key_pw.ver_key = pw_ver_key;
-    en_key_pw.has_key = pw_has_key;
     reg_key_obj(ENTRY_KEY_PW, &en_key_pw);
 
     return 0;

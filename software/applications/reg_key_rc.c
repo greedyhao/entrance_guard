@@ -14,10 +14,10 @@ static rt_event_t rc_evt = RT_NULL;
 static uint32_t tmp_id = 0;
 
 static struct entry_key en_key_rc = {0};
-static uint32_t rc_id[KEY_ID_MAX] = {0};
 
-static void rc_add_key(uint16_t id)
+static void rc_add_key(user_info_t info)
 {
+    uint16_t id = atoi(info->name);
     uint32_t rec = 0;
     if (id > KEY_ID_MAX)
     {
@@ -26,15 +26,14 @@ static void rc_add_key(uint16_t id)
     }
     LOG_D("rc key add");
     rt_event_recv(rc_evt, EVENT_SCAN_END, RT_EVENT_FLAG_AND | RT_EVENT_FLAG_CLEAR, RT_WAITING_FOREVER, &rec);
-    rc_id[id] = tmp_id;
 }
 
-static void rc_del_key(uint16_t id)
+static void rc_del_key(user_info_t info)
 {
-    rc_id[id] = 0;
+    uint16_t id = atoi(info->name);
 }
 
-static uint16_t rc_ver_key(void)
+static uint16_t rc_ver_key(char *name)
 {
     uint32_t rec = 0;
     uint16_t i = 0;
@@ -46,11 +45,6 @@ static uint16_t rc_ver_key(void)
             return i;
     }
     return KEY_VER_ERROR;
-}
-
-static uint8_t rc_has_key(uint16_t id)
-{
-    return (rc_id[id] != 0) ? 1 : 0;
 }
 
 static void rc_init_thread(void *param)
@@ -85,7 +79,6 @@ static int rt_hw_rc_port(void)
     en_key_rc.add_key = rc_add_key;
     en_key_rc.del_key = rc_del_key;
     en_key_rc.ver_key = rc_ver_key;
-    en_key_rc.has_key = rc_has_key;
     reg_key_obj(ENTRY_KEY_RF, &en_key_rc);
 
     rc_evt = rt_event_create("rck-evt", RT_IPC_FLAG_FIFO);

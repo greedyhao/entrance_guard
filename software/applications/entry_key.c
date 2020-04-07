@@ -15,6 +15,8 @@
 #define DBG_LVL              DBG_LOG
 #include <rtdbg.h>
 
+static uint8_t wait_key_single(char *name, rt_int32_t timeout);
+
 //static const char key_desc[CFG_KEY_TOTAL_NUM][3] = { "PW","FP","RF","FD" };
 static entry_key_t key_table[KEY_TYPES_MAX] = {0};
 static rt_event_t kdet_evt = RT_NULL;
@@ -117,7 +119,12 @@ void add_auth_test(void *p)
 }
 MSH_CMD_EXPORT(add_auth_test, "add auth test");
 
-//TODO add a func to control door open
+/**
+ * @brief control door open
+ * @param lock_state
+ * @ref USR_CHECK_AUTH_OK  open
+ * @ref USR_CHECK_AUTH_ERR do nothing
+ */
 static void lock_control(uint16_t lock_state)
 {
     static uint8_t tick;
@@ -134,6 +141,33 @@ static void lock_control(uint16_t lock_state)
         LOG_I("door close!");
     }
 }
+
+void fills_to_len_with_zero(char *key, uint8_t len)
+{
+    char zero_fill[PW_KEY_LEN+1] = {"000000"};
+    uint8_t n_len = strlen(key);
+    uint8_t i,j = 0;
+    if (n_len != len)
+    {
+        i = PW_KEY_LEN - n_len;
+        LOG_D("key before filled:%s", key);
+        while (i < PW_KEY_LEN)
+        {
+            zero_fill[i] = key[j];
+            i++;
+            j++;
+        }
+        strncpy(key, zero_fill, PW_KEY_LEN);
+        LOG_D("key after filled:%s", key);
+    }
+}
+
+//void fills_to_len_with_zero_test()
+//{
+//    char key[USER_KEY_LEN] = {"111"};
+//    fills_to_len_with_zero(key, PW_KEY_LEN);
+//}
+//MSH_CMD_EXPORT(fills_to_len_with_zero_test, "fills_to_len_with_zero_test");
 
 uint8_t if_key_in_flash(const char *key_type, char *name, const char *key)
 {
@@ -203,7 +237,13 @@ void del_key_in_flash(const char *key_type, const char *name, const char *key)
     buff_name_p = strstr(buff, name);
     if (buff_name_p != NULL) // 修改存储在 flash 中的 key_type 的信息，由于没有相关需求，功能正确性未验证
     {
-        strncpy(buff_name_p, buff_name_p+NAME_STR_LEN+PW_KEY_LEN+2, KEY_IN_FLASH_LEN-1);
+//        if (*(buff_name_p+NAME_STR_LEN+PW_KEY_LEN+2) != '\0') // TODO 需要删除空的环境变量吗，可以考虑
+            strncpy(buff_name_p, buff_name_p+NAME_STR_LEN+PW_KEY_LEN+2, KEY_IN_FLASH_LEN-1);
+//        else
+//        {
+//            ef_del_env(key_type);
+//            return;
+//        }
     }
     LOG_D("after %s %s:%s", __func__, key_type, buff);
     ef_set_env_blob(key_type, buff, KEY_IN_FLASH_LEN); // 修改后的 key_type 回写到 flash
@@ -236,7 +276,7 @@ static void value_wrap(uint8_t flag, user_info_t info, void *value_buf, size_t b
         for (i=ENTRY_KEY_PW; i < ENTRY_KEY_FD; i++)
         {
             if (key_point[i] == NULL) continue;
-            sprintf(desc_buf, "%d", i);
+            snprintf(desc_buf, 2, "%d", i);
             strcat(value_buf, desc_buf);
             strncat(value_buf, key_point[i], USER_KEY_LEN-1);
             strcat(value_buf, ",");
@@ -284,23 +324,17 @@ MSH_CMD_EXPORT(get_user_info_from_flash_test, "get_user_info_from_flash_test");
 static void input_user_name(char *name)
 {
 //    RT_ASSERT(info->name != NULL);
-    char buff[KEYPAD_FIFO_SIZE] = {0};
+    char buff[KEYPAD_FIFO_SIZE] = {""};
 
     LOG_I("input user name:");
     uint8_t len = 0;
     uint8_t i = 0;
 
     guard_get_value_from_outcome(buff, &len);
-    if (len > NAME_STR_LEN+1)
+    if (len > NAME_STR_LEN+1) // 111#
         i = len - NAME_STR_LEN+1;
     keypad_num_to_str(buff, NAME_STR_LEN);
-//    strncpy(info->name, buff+i, NAME_STR_LEN);
     strncpy(name, buff+i, NAME_STR_LEN);
-//    rt_memset(buff, 0, len);
-//    rt_kprintf("%s %s\n", info->name, buffer);
-
-//    store info->name into flash
-//    ef_get_env_blob("user", info->name, (NAME_BUF_LEN+1)*3, NULL);
 }
 
 /**
@@ -317,15 +351,13 @@ static void prefix_root_env(char *root, const char *name)
 
 static void add_root_auth(const char *name)
 {
-    char root[ROOT_USER_LEN] = {0}; // 1 is the split of ,
+    char root[ROOT_USER_LEN] = {""}; // 1 is the split of ,
     ef_get_env_blob("root", root, ROOT_USER_LEN, NULL); // format: 111,222,333,
 
     prefix_root_env(root, name);
     ef_set_env_blob("root", root, ROOT_USER_LEN);
 }
 
-//TODO 新输入的用户会覆盖之前用户的 root 权限
-//TODO 重新检查一遍所有 ef_set_env_blob 有没有存储 '\0'
 static rt_err_t check_root_auth(const user_info_t info)
 {
     char root[ROOT_USER_LEN] = {0}; // 1 is the split of ,
@@ -354,7 +386,7 @@ static rt_err_t check_root_auth(const user_info_t info)
  */
 static uint8_t input_user_option()
 {
-    LOG_I("input user option(1:add user 2:delete user 3:add root user):");
+    LOG_I("input user option(1:add user 2:add root user 3:delete user ):");
     char buffer[KEYPAD_FIFO_SIZE] = {0};
     uint8_t len = 0;
     uint8_t i = 0;
@@ -365,6 +397,11 @@ static uint8_t input_user_option()
     return buffer[i];
 }
 
+/**
+ *
+ * @param info
+ * @param option
+ */
 static void input_user_key_type(user_info_t info, uint8_t option)
 {
 //    1. enter the key type
@@ -382,8 +419,9 @@ static void input_user_key_type(user_info_t info, uint8_t option)
             key_table[buff[i]-1]->add_key(info);
             break;
         case USR_OP_ADD_RUSR:
+            // TODO 添加 root 验证
             input_user_name(buff);
-            add_root_auth(info->name);
+            add_root_auth(buff);
             break;
         case USR_OP_DEL_NUSR:
             key_table[buff[i]-1]->del_key(info);
@@ -443,6 +481,7 @@ static uint8_t pw_evt_proc(char *name)
 
     if (len >= PW_KEY_LEN)
     {
+        //TODO 考虑 pw_ver_key 这里直接传递前面 guard_get_value_from_outcome 读出的内容
         ret = pw_ver_key(name, buffer, len);
 //        ret = key_table[ENTRY_KEY_PW]->ver_key(name);
         rt_kprintf("name:%s buffer:%s\n", name, buffer);
@@ -452,20 +491,23 @@ static uint8_t pw_evt_proc(char *name)
 
 static uint8_t fp_evt_proc(char *name)
 {
-    rt_kprintf("TODO\n");
-    return 0;
+    uint8_t ret = USR_CHECK_AUTH_ERR;
+    ret = key_table[ENTRY_KEY_FP]->ver_key(name);
+    LOG_D("ret:%d name:%s", ret, name);
+    return ret;
 }
 
 static uint8_t rf_evt_proc(char *name)
 {
     rt_kprintf("TODO\n");
-    return 0;
+    return USR_CHECK_AUTH_ERR;
 }
 
 static uint8_t wait_key_single(char *name, rt_int32_t timeout)
 {
     rt_uint32_t set = 0;
     uint8_t ret = USR_CHECK_AUTH_ERR;
+//    TODO 预留云端控制的接口
     rt_event_recv(kdet_evt, EVT_GRD_DET_PW|EVT_GRD_DET_FP|EVT_GRD_DET_RF|EVT_GRD_DET_FD, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, &set);
     switch (set) {
         case EVT_GRD_DET_PW:
@@ -473,15 +515,15 @@ static uint8_t wait_key_single(char *name, rt_int32_t timeout)
             ret = pw_evt_proc(name);
             break;
         case EVT_GRD_DET_FP:
-            rt_kprintf("get finger print event\n");
+            LOG_D("get finger print event");
             ret = fp_evt_proc(name);
             break;
         case EVT_GRD_DET_RF:
-            rt_kprintf("get RF event\n");
+            LOG_D("get RF event");
             ret = rf_evt_proc(name);
             break;
         case EVT_GRD_DET_FD:
-            rt_kprintf("get face event\n");
+            LOG_D("get face event");
             break;
         default:
             break;
@@ -507,6 +549,7 @@ static void guard_wkng_thread(void *p)
                 if (!ret) LOG_I("root check ok!");
                 else
                 {
+                    LOG_I("root check fail!");
                     guard_set_wkng_mode(WKNG_MODE_NORM);
                     continue;
                 }
@@ -518,6 +561,7 @@ static void guard_wkng_thread(void *p)
             case WKNG_MODE_NORM:
                 key_ver_ok = wait_key_single(name, 50); //event?
                 lock_control(key_ver_ok); ///< 门锁控制，自动关门
+//                 TODO 上报开门的 name 和 key-type
                 break;
             case WKNG_MODE_IDLE:
 //                rt_kprintf("C");
@@ -532,6 +576,7 @@ static void guard_wkng_thread(void *p)
 static int entry_guard_init(void)
 {
     rt_pin_mode(LOCK_PIN_NUM, PIN_MODE_OUTPUT);
+    rt_pin_write(LOCK_PIN_NUM, PIN_HIGH);
     rt_pin_write(LOCK_PIN_NUM, PIN_LOW);
 
     kdet_evt = rt_event_create("kdet-evt", RT_IPC_FLAG_FIFO);

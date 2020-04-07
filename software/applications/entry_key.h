@@ -87,7 +87,6 @@ struct entry_key{
     void (*add_key)(user_info_t info);  ///> add a new key
     void (*del_key)(user_info_t info);  ///> delete a key
     uint8_t (*ver_key)(char *name);  ///> verify the key, return the result and the user name
-    uint8_t (*has_key)(uint16_t id); ///> check presence of the key
 };
 typedef struct entry_key *entry_key_t;
 
@@ -106,6 +105,7 @@ rt_event_t get_key_det_evt(void);
  */
 void reg_key_obj(enum entry_key_type key_type, entry_key_t key_obj);
 
+void fills_to_len_with_zero(char *key, uint8_t len);
 uint8_t if_key_in_flash(const char *key_type, char *name, const char *key);
 void str_key_to_flash(const char *key_type, const char *name, const char *key);
 void del_key_in_flash(const char *key_type, const char *name, const char *key);

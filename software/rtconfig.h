@@ -196,7 +196,8 @@
 
 /* Notice: PI8 --> 136 */
 
-#define PKG_AS608_WAK_PIN 1
+#define PKG_AS608_WAK_PIN 29
+#define PKG_USING_AS608_SAMPLE
 #define PKG_USING_AS608_LATEST_VERSION
 #define PKG_USING_RC522
 #define MFRC522_SPI_BUS_NAME "spi1"
@@ -236,6 +237,8 @@
 #define BSP_USING_UART1
 #define BSP_USING_UART2
 #define BSP_USING_UART6
+#define BSP_USING_SPI
+#define BSP_USING_SPI1
 #define BSP_USING_ON_CHIP_FLASH
 /* end of On-chip Peripheral Drivers */
 
