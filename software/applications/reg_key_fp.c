@@ -43,7 +43,7 @@ static void fp_del_key(user_info_t info)
     rt_kprintf("fp_del_key:%s atoi:%d\n", info->name, atoi(info->name));
     uint16_t id = atoi(info->name);
     as60x_delet_fp_n_id(id, 1);
-    strcpy(info->key_pw, "xxxxxx");
+    strcpy(info->key_rf, "xxxxxx");
     del_key_in_flash("fp-key", info->name, info->key_fp); ///> delete password in flash
 }
 

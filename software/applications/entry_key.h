@@ -78,7 +78,7 @@ struct user_info {
     char name[NAME_BUF_LEN];
     char key_pw[USER_KEY_LEN];
     char key_fp[USER_KEY_LEN];
-    char key_rc[USER_KEY_LEN];
+    char key_rf[USER_KEY_LEN];
     char key_fd[USER_KEY_LEN];
 };
 typedef struct user_info *user_info_t;

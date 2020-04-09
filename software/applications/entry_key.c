@@ -269,7 +269,7 @@ static void value_wrap(uint8_t flag, user_info_t info, void *value_buf, size_t b
 
     key_point[0] = info->key_pw;
     key_point[1] = info->key_fp;
-    key_point[2] = info->key_rc;
+    key_point[2] = info->key_rf;
     key_point[3] = info->key_fd;
 
     if (flag == 1) {
@@ -317,7 +317,7 @@ static void get_user_info_from_flash_test()
 {
     struct user_info info = {"111", "0", "0", "0", "0"};
     get_user_info_from_flash(&info);
-    rt_kprintf("get_user_info_from_flash_test: %s %s %s %s\n", info.key_pw, info.key_fp, info.key_rc, info.key_fd);
+    rt_kprintf("get_user_info_from_flash_test: %s %s %s %s\n", info.key_pw, info.key_fp, info.key_rf, info.key_fd);
 }
 MSH_CMD_EXPORT(get_user_info_from_flash_test, "get_user_info_from_flash_test");
 
@@ -499,14 +499,17 @@ static uint8_t fp_evt_proc(char *name)
 
 static uint8_t rf_evt_proc(char *name)
 {
-    rt_kprintf("TODO\n");
-    return USR_CHECK_AUTH_ERR;
+    uint8_t ret = USR_CHECK_AUTH_ERR;
+    ret = key_table[ENTRY_KEY_RF]->ver_key(name);
+//    LOG_D("ret:%d name:%s", ret, name);
+    return ret;
 }
 
 static uint8_t wait_key_single(char *name, rt_int32_t timeout)
 {
     rt_uint32_t set = 0;
     uint8_t ret = USR_CHECK_AUTH_ERR;
+
 //    TODO 预留云端控制的接口
     rt_event_recv(kdet_evt, EVT_GRD_DET_PW|EVT_GRD_DET_FP|EVT_GRD_DET_RF|EVT_GRD_DET_FD, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, &set);
     switch (set) {
@@ -519,7 +522,6 @@ static uint8_t wait_key_single(char *name, rt_int32_t timeout)
             ret = fp_evt_proc(name);
             break;
         case EVT_GRD_DET_RF:
-            LOG_D("get RF event");
             ret = rf_evt_proc(name);
             break;
         case EVT_GRD_DET_FD:
@@ -576,7 +578,8 @@ static void guard_wkng_thread(void *p)
 static int entry_guard_init(void)
 {
     rt_pin_mode(LOCK_PIN_NUM, PIN_MODE_OUTPUT);
-    rt_pin_write(LOCK_PIN_NUM, PIN_HIGH);
+//    rt_pin_write(LOCK_PIN_NUM, PIN_HIGH);
+//    rt_thread_mdelay(2000);
     rt_pin_write(LOCK_PIN_NUM, PIN_LOW);
 
     kdet_evt = rt_event_create("kdet-evt", RT_IPC_FLAG_FIFO);

@@ -9,6 +9,7 @@ ef_fal_port.c
 entry_key.c
 reg_key_fp.c
 reg_key_pw.c
+reg_key_rc.c
 matrix_keypad_sample.c
 matrix_keypad.c
 """)
