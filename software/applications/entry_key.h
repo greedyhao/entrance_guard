@@ -40,15 +40,15 @@
 #define EVT_GRD_DET_RF (1U << 2)
 #define EVT_GRD_DET_FD (1U << 3)
 
-#define EVT_KEY_DET_PW (1U << 4)
-#define EVT_KEY_DET_FP (1U << 5)
-#define EVT_KEY_DET_RF (1U << 6)
-#define EVT_KEY_DET_FD (1U << 7)
+#define EVT_GRD_DET_CLOUD (1U << 7)
 
 #define USR_CHECK_AUTH_OK   0
 #define USR_CHECK_AUTH_ERR  1
 
-#define LOCK_PIN_NUM    GET_PIN(B, 14)
+#define LOCK_STATUS_OPEN    0
+#define LOCK_STATUS_CLOSE   1
+
+#define LOCK_PIN_NUM    GET_PIN(B, 1)
 /** key configure end */
 
 enum
@@ -110,6 +110,8 @@ uint8_t if_key_in_flash(const char *key_type, char *name, const char *key);
 void str_key_to_flash(const char *key_type, const char *name, const char *key);
 void del_key_in_flash(const char *key_type, const char *name, const char *key);
 
+uint8_t get_lock_status(void);
+
 /**
  * @brief 这个接口暂时找不到合并的办法，先单独实现
  * @param name
@@ -117,5 +119,6 @@ void del_key_in_flash(const char *key_type, const char *name, const char *key);
  * @return
  */
 uint8_t pw_ver_key(char *name, char *key, uint8_t len);
+
 
 #endif

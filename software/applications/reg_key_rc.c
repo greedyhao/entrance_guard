@@ -2,6 +2,8 @@
 #include "mfrc522.h" // rc522 packages
 
 #include <string.h>
+#include <stdio.h>
+#include "easyflash.h"
 
 #define DBG_TAG              "key.rc"
 // #define DBG_LVL              DBG_INFO
@@ -35,7 +37,7 @@ static void rc_add_key(user_info_t info)
     char *str = NULL;
 
     rt_event_send(rf_evt, EVENT_MB_WR_ENABLE);
-    rt_mb_recv(rf_mb, (rt_uint32_t *)&str, RT_WAITING_FOREVER);
+    rt_mb_recv(rf_mb, (rt_ubase_t *)&str, RT_WAITING_FOREVER);
     strncpy(info->key_rf, str+2, RF_KEY_LEN);
     str_key_to_flash("rf_key", info->name, info->key_rf);
 }
@@ -43,7 +45,7 @@ static void rc_add_key(user_info_t info)
 static void rc_del_key(user_info_t info)
 {
 //    uint16_t id = atoi(info->name);
-    char *str = NULL;
+//    char *str = NULL;
 //    rt_event_send(rf_evt, EVENT_MB_WR_ENABLE);
 //    rt_mb_recv(rf_mb, (rt_uint32_t *)&str, RT_WAITING_FOREVER);
     strcpy(info->key_rf, "xxxxxx");
@@ -66,7 +68,7 @@ static uint8_t rc_ver_key(char *name)
     }
 
     rt_event_send(rf_evt, EVENT_MB_WR_ENABLE);
-    rt_mb_recv(rf_mb, (rt_uint32_t *)&str, RT_WAITING_FOREVER);
+    rt_mb_recv(rf_mb, (rt_ubase_t *)&str, RT_WAITING_FOREVER);
     ret = if_key_in_flash("rf_key", name, str+2);
     LOG_D("rc key ver, name:%s key:%s", name, str+2);
     return ret;

@@ -22,6 +22,8 @@ static entry_key_t key_table[KEY_TYPES_MAX] = {0};
 static rt_event_t kdet_evt = RT_NULL;
 static enum wkng_mode_type flag_wkng_mode = WKNG_MODE_NORM; // working mode 0:root 1:normal 2:idle
 static uint8_t flag_add_key = 0;
+static uint8_t lock_status = LOCK_STATUS_CLOSE;
+static uint8_t cloud_cntl = 0;
 
 /**
  * @brief Get the key object
@@ -130,6 +132,7 @@ static void lock_control(uint16_t lock_state)
     static uint8_t tick;
     if (lock_state == USR_CHECK_AUTH_OK) {
         tick = 41;
+        lock_status = LOCK_STATUS_OPEN;
         rt_pin_write(LOCK_PIN_NUM, PIN_HIGH);
         LOG_I("door open!");
     }
@@ -138,8 +141,15 @@ static void lock_control(uint16_t lock_state)
     }
     if (tick == 1) {
         rt_pin_write(LOCK_PIN_NUM, PIN_LOW);
+        lock_status = LOCK_STATUS_CLOSE;
+        cloud_cntl = 0;
         LOG_I("door close!");
     }
+}
+
+uint8_t get_lock_status(void)
+{
+    return lock_status;
 }
 
 void fills_to_len_with_zero(char *key, uint8_t len)
@@ -510,8 +520,8 @@ static uint8_t wait_key_single(char *name, rt_int32_t timeout)
     rt_uint32_t set = 0;
     uint8_t ret = USR_CHECK_AUTH_ERR;
 
-//    TODO 预留云端控制的接口
-    rt_event_recv(kdet_evt, EVT_GRD_DET_PW|EVT_GRD_DET_FP|EVT_GRD_DET_RF|EVT_GRD_DET_FD, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, &set);
+    rt_event_recv(kdet_evt, EVT_GRD_DET_PW|EVT_GRD_DET_FP|EVT_GRD_DET_RF|EVT_GRD_DET_FD|EVT_GRD_DET_CLOUD, RT_EVENT_FLAG_OR|RT_EVENT_FLAG_CLEAR, timeout, &set);
+//    if (cloud_cntl == 0) return ret; // 当前处于云端控制状态
     switch (set) {
         case EVT_GRD_DET_PW:
             LOG_D("get keypad event");
@@ -519,6 +529,7 @@ static uint8_t wait_key_single(char *name, rt_int32_t timeout)
             break;
         case EVT_GRD_DET_FP:
             LOG_D("get finger print event");
+            if (cloud_cntl == 1) break; // TODO 解决一次误触发
             ret = fp_evt_proc(name);
             break;
         case EVT_GRD_DET_RF:
@@ -527,9 +538,15 @@ static uint8_t wait_key_single(char *name, rt_int32_t timeout)
         case EVT_GRD_DET_FD:
             LOG_D("get face event");
             break;
+        case EVT_GRD_DET_CLOUD:
+            cloud_cntl = 1;
+            ret = USR_CHECK_AUTH_OK;
+            break;
         default:
             break;
     }
+
+//    ret = ret || !cloud_cntl;
     return ret;
 }
 
@@ -592,4 +609,4 @@ static int entry_guard_init(void)
         rt_thread_startup(tid);
     return 0;
 }
-INIT_ENV_EXPORT(entry_guard_init);
+INIT_APP_EXPORT(entry_guard_init);
